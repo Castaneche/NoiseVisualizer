@@ -44,8 +44,6 @@ int main()
 	while (window.isOpen()) {
 		sf::Event event;
 
-		MousePos = sf::Mouse::getPosition(window);
-
 		while (window.pollEvent(event)) {
 			ImGui::SFML::ProcessEvent(event);
 
@@ -85,36 +83,6 @@ int main()
 		ImGui::Begin("Perlin Noise", 0, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar);
 		ImGui::SetWindowPos(ImVec2(0, 0));
 		ImGui::SetWindowSize(ImVec2(window.getSize().x, window.getSize().y));
-
-		ImGui::BeginMenuBar();
-		if (ImGui::BeginMenu("File"))
-		{
-			if (ImGui::MenuItem("New")) {}
-			if (ImGui::MenuItem("Open")) {}
-			if (ImGui::MenuItem("Open Recent")) {}
-			if (ImGui::MenuItem("Save")) {}
-			if (ImGui::MenuItem("Save As")) {}
-			ImGui::EndMenu();
-		}
-		if (ImGui::BeginMenu("Edit"))
-		{
-			ImGui::Checkbox("Anti Aliasing", &ImPlot::GetStyle().AntiAliasedLines);
-			ImGui::EndMenu();
-		}
-		if (ImGui::BeginMenu("Layout"))
-		{
-			if (ImGui::MenuItem("Reset"))
-			{
-				Separator1 = 0.2f * window.getSize().x;
-				Separator2 = 0.7f * window.getSize().x;
-				resizeLayout = true;
-			}
-			ImGui::EndMenu();
-		}
-		if (ImGui::Button("About"))
-		{
-		}
-		ImGui::EndMenuBar();
 
 		if (ImGui::CollapsingHeader("[1D] Perlin Noise"))
 		{
