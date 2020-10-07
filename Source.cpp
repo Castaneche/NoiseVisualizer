@@ -19,8 +19,6 @@ int main()
 	ImPlot::CreateContext();
 	ImPlot::GetStyle().AntiAliasedLines = false;
 
-	bool focus = true;
-
 	ApplyTheme6();
 	ImGuiIO& io = ImGui::GetIO();
 	ImFont* font = io.Fonts->AddFontFromFileTTF("res/font/bebas/Bebas-Regular.ttf", 17.0f);
@@ -49,18 +47,7 @@ int main()
 
 			if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
 				window.close();
-
-			if (event.type == sf::Event::LostFocus)
-				focus = false;
-			if (event.type == sf::Event::GainedFocus)
-				focus = true;
-
-			if (!focus)
-				break;
 		}
-
-		if (!focus)
-			continue;
 
 		delta = deltaClock.restart();
 

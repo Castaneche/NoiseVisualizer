@@ -18,9 +18,13 @@ private:
 	sf::Image image;
 	sf::Texture texture;
 
-	bool update = true;
+	enum Update { None, All, Color };
+	Update update = All;
+
+	std::vector<double> noise;
 
 	//params
+	int maxOctave = 8;
 	float imageSize = 100;
 	int pixelCount = 100;
 

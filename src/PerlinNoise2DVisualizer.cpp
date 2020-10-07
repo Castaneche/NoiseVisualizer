@@ -25,23 +25,38 @@ PerlinNoise2DVisualizer::~PerlinNoise2DVisualizer()
 
 void PerlinNoise2DVisualizer::Show()
 {
-	if (update)
+	if (update != None)
 	{
+		if (update == All) //Clear noise buffer
+				noise.clear();
+
+		double n = 0;
 		for (int i = 0; i < pixelCount; i++)
 		{
 			for (int j = 0; j < pixelCount; j++)
 			{
-				double n = pn.noise(i / double(pixelCount) * frequency, j / double(pixelCount) * frequency, octaves, persistence, interpolationMethod);
-				double r = lowColor[0] + n * (highColor[0] - lowColor[0]);
-				double g = lowColor[1] + n * (highColor[1] - lowColor[1]);
-				double b = lowColor[2] + n * (highColor[2] - lowColor[2]);
+				double x = i / double(pixelCount) * frequency;
+				double y = j / double(pixelCount) * frequency;
 
-				image.setPixel(i, j, sf::Color(r*255.0f,g*255.0f,b*255.0f));
+				if (update == All)
+				{
+					n = pn.noise(x, y, octaves, persistence, interpolationMethod);
+					noise.push_back(n);
+				}
+				if (update == All || update == Color)
+				{
+					double currNoiseValue = noise[(i*pixelCount) + j % pixelCount];
+					double r = lowColor[0] + currNoiseValue * (highColor[0] - lowColor[0]);
+					double g = lowColor[1] + currNoiseValue * (highColor[1] - lowColor[1]);
+					double b = lowColor[2] + currNoiseValue * (highColor[2] - lowColor[2]);
+
+					image.setPixel(i, j, sf::Color(r*255.0f, g*255.0f, b*255.0f));
+				}
 			}
 		}
 
 		texture.loadFromImage(image);
-		update = false;
+		update = None;
 	}
 	ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4(.8f,.8f,.8f,1.0f));
 	ImGui::BeginChild("2D Perlin Noise Menu Bar", ImVec2(0, 25), false, ImGuiWindowFlags_MenuBar);
@@ -91,29 +106,29 @@ void PerlinNoise2DVisualizer::Show()
 	if (ImGui::DragInt("seed", &seed, 1.0f, 0, 1000))
 	{
 		pn.setSeed(seed);
-		update = true;
+		update = All;
 	}
 	if (ImGui::SliderInt("Octaves", &octaves, 1, 8))
-		update = true;
+		update = All;
 	if (ImGui::DragFloat("Persistence", &persistence, .01f, 0.0f, 10.0f))
-		update = true;
+		update = All;
 	if (ImGui::DragFloat("Frequency", &frequency, 0.1, 0, 500))
-		update = true;
+		update = All;
 	ImGui::Text("Interpolation : ");
 	if (ImGui::Button("Linear"))
 	{
 		interpolationMethod = Linear;
-		update = true;
+		update = All;
 	} ImGui::SameLine();
 	if (ImGui::Button("Cosine"))
 	{
 		interpolationMethod = Cosine;
-		update = true;
+		update = All;
 	} ImGui::SameLine();
 	if (ImGui::Button("Cubic"))
 	{
 		interpolationMethod = Cubic;
-		update = true;
+		update = All;
 	}
 
 
@@ -122,32 +137,32 @@ void PerlinNoise2DVisualizer::Show()
 	{
 		pixelCount = 50;
 		image.create(pixelCount, pixelCount);
-		update = true;
+		update = All;
 	} ImGui::SameLine();
 	if (ImGui::Button("Low\n(100x100)"))
 	{
 		pixelCount = 100;
 		image.create(pixelCount, pixelCount);
-		update = true;
+		update = All;
 	} ImGui::SameLine();
 	if (ImGui::Button("Medium\n(200x200)"))
 	{
 		pixelCount = 200;
 		image.create(pixelCount, pixelCount);
-		update = true;
+		update = All;
 	} ImGui::SameLine();
 	if (ImGui::Button("High\n(300x300)"))
 	{
 		pixelCount = 300;
 		image.create(pixelCount, pixelCount);
-		update = true;
+		update = All;
 	} 
 
 	ImGui::Text("Colormap : ");
 	if (ImGui::ColorEdit3("Low", lowColor))
-		update = true;
+		update = Color;
 	if (ImGui::ColorEdit3("High", highColor))
-		update = true;
+		update = Color;
 	
 	ImGui::EndChild();
 }
