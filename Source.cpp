@@ -67,7 +67,7 @@ int main()
 		ImGui::SFML::Update(window, delta);
 		ImGui::PushFont(font);
 
-		ImGui::Begin("Perlin Noise", 0, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar);
+		ImGui::Begin("Perlin Noise", 0, ImGuiWindowFlags_NoDecoration);
 		ImGui::SetWindowPos(ImVec2(0, 0));
 		ImGui::SetWindowSize(ImVec2(window.getSize().x, window.getSize().y));
 

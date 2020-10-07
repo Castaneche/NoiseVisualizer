@@ -15,6 +15,8 @@ PerlinNoise2DVisualizer::PerlinNoise2DVisualizer(float imagesize, int pixelcount
 
 	lowColor = new float[3] {0,0,0};
 	highColor = new float[3]{ 1,1,1 };
+	colors.push_back(lowColor);
+	colors.push_back(highColor);
 }
 
 
@@ -41,15 +43,34 @@ void PerlinNoise2DVisualizer::Show()
 				if (update == All)
 				{
 					n = pn.noise(x, y, octaves, persistence, interpolationMethod);
+
 					noise.push_back(n);
 				}
 				if (update == All || update == Color)
 				{
+					double r = 0;
+					double g = 0;
+					double b = 0;
 					double currNoiseValue = noise[(i*pixelCount) + j % pixelCount];
-					double r = lowColor[0] + currNoiseValue * (highColor[0] - lowColor[0]);
-					double g = lowColor[1] + currNoiseValue * (highColor[1] - lowColor[1]);
-					double b = lowColor[2] + currNoiseValue * (highColor[2] - lowColor[2]);
+					if (terrain == false)
+					{
+						double h = 1.0f / double(colors.size() - 1);
+						double colorIndex = std::floor(currNoiseValue / h);
 
+						double t = (currNoiseValue - colorIndex*h) / h;
+
+						r = colors[colorIndex][0] + t * (colors[colorIndex + 1][0] - colors[colorIndex][0]);
+						g = colors[colorIndex][1] + t * (colors[colorIndex + 1][1] - colors[colorIndex][1]);
+						b = colors[colorIndex][2] + t * (colors[colorIndex + 1][2] - colors[colorIndex][2]);
+					}
+					else
+					{
+						double h = 1.0f / double(colors.size());
+						double colorIndex = std::floor(currNoiseValue / h);
+
+						r = colors[colorIndex][0]; g = colors[colorIndex][1]; b = colors[colorIndex][2];
+					}
+					
 					image.setPixel(i, j, sf::Color(r*255.0f, g*255.0f, b*255.0f));
 				}
 			}
@@ -79,11 +100,15 @@ void PerlinNoise2DVisualizer::Show()
 	}
 	if (ImGui::BeginMenu("View"))
 	{
-		if (ImGui::BeginMenu("Show"))
+		if (ImGui::MenuItem("Texture"))
 		{
-			bool temp = false;
-			ImGui::Checkbox("Octaves", &temp);
-			ImGui::EndMenu();
+			update = Color;
+			terrain = false;
+		}
+		if (ImGui::MenuItem("Terrain"))
+		{
+			update = Color;
+			terrain = true;
 		}
 		ImGui::EndMenu();
 	}
@@ -92,14 +117,19 @@ void PerlinNoise2DVisualizer::Show()
 	ImGui::EndChild();
 	ImGui::PopStyleColor();
 
-	ImGui::BeginChild("Perlin Noise 2D Texture", ImVec2(imageSize + 70,imageSize + 50));
+	ImGui::BeginChild("Perlin Noise 2D Texture", ImVec2(imageSize + 70, imageSize + 200));
 		ImGui::Image(texture, sf::Vector2f(imageSize, imageSize), sf::FloatRect(0, 0, texture.getSize().x, texture.getSize().y));
 		ImGui::SameLine();
-		ImVec4 a[2] = { ImVec4(lowColor[0],lowColor[1],lowColor[2],1), ImVec4(highColor[0],highColor[1],highColor[2],1) };
-		ImPlot::PushColormap(a, 2);
-		ImPlot::ShowColormapScale(0, 1, imageSize);
+		const int N = colors.size();
+		ImVec4* a = new ImVec4[N];
+		for (int i = 0; i < N; i++)
+		{
+			a[i] = ImVec4(colors[i][0], colors[i][1], colors[i][2], 1.0f);
+		}
+		ImPlot::PushColormap(a, N);
+		ImPlot::ShowColormapScale(0, 1, imageSize/1.7);
 		ImPlot::PopColormap();
-		ImGui::Text("Res(%dx%d) ; Octaves(%d) ; Freq(%.2f) ; Persistence(%.2f)",pixelCount, pixelCount, octaves, frequency, persistence);
+		ImGui::Text("Res(%dx%d) ; Octaves(%d) ; Freq(%.2f) ; Persistence(%.2f)", pixelCount, pixelCount, octaves, frequency, persistence);
 	ImGui::EndChild(); ImGui::SameLine();
 
 	ImGui::BeginChild("Perlin Noise 2D Setup", ImVec2(ImGui::GetWindowWidth() - (imageSize+70), imageSize + 50));
@@ -159,10 +189,24 @@ void PerlinNoise2DVisualizer::Show()
 	} 
 
 	ImGui::Text("Colormap : ");
-	if (ImGui::ColorEdit3("Low", lowColor))
-		update = Color;
-	if (ImGui::ColorEdit3("High", highColor))
-		update = Color;
+	for (int i = 0; i < colors.size(); i++)
+	{
+		if (ImGui::ColorEdit3(("##"+std::to_string(i)).c_str(), colors[i]))
+			update = Color;
+		ImGui::SameLine();
+		if (ImGui::Button((" - ##" + std::to_string(i)).c_str()))
+		{
+			colors.erase(colors.begin() + i);
+		}
+		if (i == colors.size() - 1)
+		{
+			ImGui::SameLine();
+			if (ImGui::Button(" + "))
+			{
+				colors.push_back(new float[3]{ 0,0,0 });
+			}
+		}
+	}
 	
 	ImGui::EndChild();
 }

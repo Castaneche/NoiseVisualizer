@@ -22,6 +22,7 @@ private:
 	Update update = All;
 
 	std::vector<double> noise;
+	bool terrain = false;
 
 	//params
 	int maxOctave = 8;
@@ -33,6 +34,7 @@ private:
 	float persistence = 1.0f;
 	float frequency = 10;
 	Interpolation interpolationMethod = Cosine;
+	std::vector<float*> colors;
 	float* lowColor;
 	float* highColor;
 };
