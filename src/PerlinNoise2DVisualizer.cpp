@@ -13,16 +13,15 @@ PerlinNoise2DVisualizer::PerlinNoise2DVisualizer(float imagesize, int pixelcount
 	pixelCount = pixelcount;
 	image.create(pixelCount, pixelCount);
 
-	lowColor = new float[3] {0,0,0};
-	highColor = new float[3]{ 1,1,1 };
-	colors.push_back(lowColor);
-	colors.push_back(highColor);
+	colors.push_back(new float[3]{ 0, 0, 0 });
+	colors.push_back(new float[3]{ 1, 1, 1 });
 }
 
 
 PerlinNoise2DVisualizer::~PerlinNoise2DVisualizer()
 {
-	delete lowColor, highColor;
+	for (unsigned int i = 0; i < colors.size(); i++)
+		delete colors[i];
 }
 
 void PerlinNoise2DVisualizer::Show()
@@ -43,8 +42,7 @@ void PerlinNoise2DVisualizer::Show()
 				if (update == All)
 				{
 					n = pn.noise(x, y, octaves, persistence, interpolationMethod);
-
-					noise.push_back(n);
+					noise.push_back(n); //Update noise buffer
 				}
 				if (update == All || update == Color)
 				{
@@ -52,7 +50,8 @@ void PerlinNoise2DVisualizer::Show()
 					double g = 0;
 					double b = 0;
 					double currNoiseValue = noise[(i*pixelCount) + j % pixelCount];
-					if (terrain == false)
+
+					if (terrain == false) //Interpolation
 					{
 						double h = 1.0f / double(colors.size() - 1);
 						double colorIndex = std::floor(currNoiseValue / h);
@@ -63,7 +62,7 @@ void PerlinNoise2DVisualizer::Show()
 						g = colors[colorIndex][1] + t * (colors[colorIndex + 1][1] - colors[colorIndex][1]);
 						b = colors[colorIndex][2] + t * (colors[colorIndex + 1][2] - colors[colorIndex][2]);
 					}
-					else
+					else //No interpolation
 					{
 						double h = 1.0f / double(colors.size());
 						double colorIndex = std::floor(currNoiseValue / h);
@@ -71,7 +70,9 @@ void PerlinNoise2DVisualizer::Show()
 						r = colors[colorIndex][0]; g = colors[colorIndex][1]; b = colors[colorIndex][2];
 					}
 					
-					image.setPixel(i, j, sf::Color(r*255.0f, g*255.0f, b*255.0f));
+					/* Perf issue on setPixel function 
+					I should use LoadFromPixels in future updates (much faster) */
+					image.setPixel(i, j, sf::Color(r*255.0f, g*255.0f, b*255.0f)); //Apply pixel color
 				}
 			}
 		}
@@ -79,9 +80,12 @@ void PerlinNoise2DVisualizer::Show()
 		texture.loadFromImage(image);
 		update = None;
 	}
+
+	//Style the menu bar to fit the Theme6
 	ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4(.8f,.8f,.8f,1.0f));
 	ImGui::BeginChild("2D Perlin Noise Menu Bar", ImVec2(0, 25), false, ImGuiWindowFlags_MenuBar);
 
+	/* Menu Bar */
 	ImGui::BeginMenuBar();
 	if (ImGui::BeginMenu("File"))
 	{
@@ -118,8 +122,10 @@ void PerlinNoise2DVisualizer::Show()
 	ImGui::PopStyleColor();
 
 	ImGui::BeginChild("Perlin Noise 2D Texture", ImVec2(imageSize + 70, imageSize + 200));
-		ImGui::Image(texture, sf::Vector2f(imageSize, imageSize), sf::FloatRect(0, 0, texture.getSize().x, texture.getSize().y));
+		//Display the Texture
+		ImGui::Image(texture, sf::Vector2f(imageSize, imageSize), sf::FloatRect(0, 0, texture.getSize().x, texture.getSize().y)); 
 		ImGui::SameLine();
+		//Show a colormap diagram
 		const int N = colors.size();
 		ImVec4* a = new ImVec4[N];
 		for (int i = 0; i < N; i++)
@@ -127,13 +133,15 @@ void PerlinNoise2DVisualizer::Show()
 			a[i] = ImVec4(colors[i][0], colors[i][1], colors[i][2], 1.0f);
 		}
 		ImPlot::PushColormap(a, N);
-		ImPlot::ShowColormapScale(0, 1, imageSize/1.7);
+		ImPlot::ShowColormapScale(0, 1, imageSize);
 		ImPlot::PopColormap();
-		ImGui::Text("Res(%dx%d) ; Octaves(%d) ; Freq(%.2f) ; Persistence(%.2f)", pixelCount, pixelCount, octaves, frequency, persistence);
+		delete a;
+		//Display all params as a string under the texture
+		ImGui::Text("Res(%dx%d) ; Octaves(%d) ; Freq(%.2f) ; Persistence(%.2f)", pixelCount, pixelCount, octaves, frequency, persistence); 
 	ImGui::EndChild(); ImGui::SameLine();
 
 	ImGui::BeginChild("Perlin Noise 2D Setup", ImVec2(ImGui::GetWindowWidth() - (imageSize+70), imageSize + 50));
-	if (ImGui::DragInt("seed", &seed, 1.0f, 0, 1000))
+	if (ImGui::DragInt("seed", &seed, 1.0f, 0, 1000)) //Seed selection : not yet implemented for 2D Perlin !
 	{
 		pn.setSeed(seed);
 		update = All;
@@ -162,6 +170,7 @@ void PerlinNoise2DVisualizer::Show()
 	}
 
 
+	/* Resolution of the image/texture */
 	ImGui::Text("Resolution : ");
 	if (ImGui::Button("Very Low\n(50x50)"))
 	{
@@ -188,17 +197,20 @@ void PerlinNoise2DVisualizer::Show()
 		update = All;
 	} 
 
+
+	/* Color palette configuration */
 	ImGui::Text("Colormap : ");
-	for (int i = 0; i < colors.size(); i++)
+	for (unsigned int i = 0; i < colors.size(); i++)
 	{
 		if (ImGui::ColorEdit3(("##"+std::to_string(i)).c_str(), colors[i]))
 			update = Color;
 		ImGui::SameLine();
-		if (ImGui::Button((" - ##" + std::to_string(i)).c_str()))
+		if (ImGui::Button((" - ##" + std::to_string(i)).c_str())) // '-' button next to every color
 		{
-			colors.erase(colors.begin() + i);
+			if(colors.size() > 2) //2 colors required
+				colors.erase(colors.begin() + i);
 		}
-		if (i == colors.size() - 1)
+		if (i == colors.size() - 1) //Add a '+' button next to the last color
 		{
 			ImGui::SameLine();
 			if (ImGui::Button(" + "))

@@ -21,7 +21,7 @@ void PerlinNoise1DVisualizer::Show()
 {
 	ImGui::BeginChild("Perlin Noise 1D Graph", ImVec2(ImGui::GetWindowWidth() * .6f, 300));
 	ImPlot::SetNextPlotLimits(0, 1, 0, 1, ImGuiCond_Always);
-	ImPlot::BeginPlot("Perlin Noise 1D");
+	ImPlot::BeginPlot("Perlin Noise 1D","", "", ImVec2(-1,0), ImPlotFlags_NoChild);
 	if (update) //update graph when needed : avoid calculation of perlin noise every frame with params unchanged
 	{
 		//Reset arrays
@@ -32,12 +32,12 @@ void PerlinNoise1DVisualizer::Show()
 
 		for (int i = 0; i < nbPoints; i++)
 		{
-			std::vector<double> interValues; //values per octave
+			std::vector<double> interValues; //values for each octave
 			double n = pn.noise(offset + i / double(nbPoints) * frequency, octaves, persistence, interpolationMethod, &interValues);
 			xvalues[i] = i / double(nbPoints);
-			if (!onlyFinal)
+			if (!onlyFinal) //Draw octaves
 			{
-				for (int k = 0; k < interValues.size(); k++)
+				for (unsigned int k = 0; k < interValues.size(); k++)
 				{
 					if (i == 0) //First iteration
 					{
@@ -52,12 +52,12 @@ void PerlinNoise1DVisualizer::Show()
 		}
 		update = false;
 	}
-	for (int i = 0; i < yvalues.size() - 1; i++)
+	for (unsigned int i = 0; i < yvalues.size() - 1; i++)
 	{
 		std::string graphTitle = "Octave " + std::to_string(i + 1);
 		ImPlot::PlotLine(graphTitle.c_str(), xvalues, yvalues[i], nbPoints);
 
-		if (ImPlot::IsLegendEntryHovered(graphTitle.c_str()))
+		if (ImPlot::IsLegendEntryHovered(graphTitle.c_str())) //Tooltip on legend to display frequency and amplitude for each octave
 		{
 			ImGui::BeginTooltip();
 			ImGui::Text("Frequency : %.2f", frequency * std::pow(2, i));
@@ -65,13 +65,14 @@ void PerlinNoise1DVisualizer::Show()
 			ImGui::EndTooltip();
 		}
 	}
-	//Cool side view hill effect for the final noise function
+	//Cool side view hill effect (shaded graph) for the final noise function 
 	ImPlot::SetNextLineStyle(ImVec4(0, 0, 0, 1), 1.0f);
 	ImPlot::PlotLine("Final", xvalues, yvalues[yvalues.size() - 1], nbPoints); //Line
 	ImPlot::SetNextFillStyle(ImVec4(0, 0, 0, 1), .25f);
 	ImPlot::PlotShaded("Final", xvalues, yvalues[yvalues.size() - 1], nbPoints); //Shade
 	ImPlot::EndPlot();
 	ImGui::EndChild();  ImGui::SameLine();
+
 	ImGui::BeginChild("Perlin Noise 1D Setup", ImVec2(ImGui::GetWindowWidth() * .45f, 300));
 	if (ImGui::DragInt("seed", &seed, 1.0f, 0, 1000))
 	{

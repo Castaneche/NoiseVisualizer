@@ -11,7 +11,7 @@ public:
 	PerlinNoise2DVisualizer(float imagesize, int pixelcount);
 	~PerlinNoise2DVisualizer();
 
-	void Show();
+	void Show(); 
 
 private: 
 	PerlinNoise pn;
@@ -22,19 +22,16 @@ private:
 	Update update = All;
 
 	std::vector<double> noise;
-	bool terrain = false;
 
 	//params
 	int maxOctave = 8;
-	float imageSize = 100;
-	int pixelCount = 100;
-
+	float imageSize; 
+	int pixelCount;
 	int seed = 123;
 	int octaves = 1;
 	float persistence = 1.0f;
 	float frequency = 10;
-	Interpolation interpolationMethod = Cosine;
+	Interpolation interpolationMethod = Cosine; 
 	std::vector<float*> colors;
-	float* lowColor;
-	float* highColor;
+	bool terrain = false;
 };

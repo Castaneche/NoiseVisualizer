@@ -52,7 +52,7 @@ int main()
 		delta = deltaClock.restart();
 
 		// ===== FPS CALCULATION ====
-		int fps = 1.0f / delta.asSeconds();
+		float fps = 1.0f / delta.asSeconds();
 
 		if (fpsClock.getElapsedTime().asMilliseconds() >= fpsLogRate) {
 			for (int i = 0; i < 49; i++)
@@ -67,18 +67,21 @@ int main()
 		ImGui::SFML::Update(window, delta);
 		ImGui::PushFont(font);
 
-		ImGui::Begin("Perlin Noise", 0, ImGuiWindowFlags_NoDecoration);
+		ImGui::Begin("Perlin Noise", 0, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove);
 		ImGui::SetWindowPos(ImVec2(0, 0));
-		ImGui::SetWindowSize(ImVec2(window.getSize().x, window.getSize().y));
+		ImGui::SetWindowSize(ImVec2(float(window.getSize().x), float(window.getSize().y)));
 
-		if (ImGui::CollapsingHeader("[1D] Perlin Noise"))
+		if (ImGui::CollapsingHeader("[1D] Perlin Noise : Graph, Hills"))
 		{
 			PN1DVisualizer.Show();
 		}
-		if (ImGui::CollapsingHeader("[2D] Perlin Noise : Texture, Terrain", ImGuiTreeNodeFlags_DefaultOpen))
+		if (ImGui::CollapsingHeader("[2D] Perlin Noise : Texture, Terrain"))
 		{
 			PN2DVisualizer.Show();
 		}
+
+		ImGui::SetCursorPosX(280);
+		ImGui::Text("Click on headers to open them");
 		ImGui::End();
 
 		ImGui::PopFont();
