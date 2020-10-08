@@ -37,7 +37,7 @@ int main()
 	float fpsvalues[50] = { 0 };
 
 	PerlinNoise1DVisualizer PN1DVisualizer(500);
-	PerlinNoise2DVisualizer PN2DVisualizer(300, 200);
+	PerlinNoise2DVisualizer PN2DVisualizer(300, 150);
 
 	while (window.isOpen()) {
 		sf::Event event;

@@ -11,12 +11,17 @@ public:
 	PerlinNoise2DVisualizer(float imagesize, int pixelcount);
 	~PerlinNoise2DVisualizer();
 
-	void Show(); 
+	void Show();
+
 
 private: 
+	void resizeImg(int pixelcount);
+
 	PerlinNoise pn;
 	sf::Image image;
 	sf::Texture texture;
+	sf::Uint8* pixels;
+	int nPixels;
 
 	enum Update { None, All, Color };
 	Update update = All;

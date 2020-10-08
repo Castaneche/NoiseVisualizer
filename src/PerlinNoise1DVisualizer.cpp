@@ -89,7 +89,12 @@ void PerlinNoise1DVisualizer::Show()
 		update = true;
 	if (ImGui::Checkbox("Final only", &onlyFinal))
 		update = true;
-	ImGui::Text("Interpolation : ");
+	ImGui::Text("Interpolation : "); ImGui::SameLine();
+	std::string s = "";
+	if (interpolationMethod == Linear) s = "Linear";
+	if (interpolationMethod == Cosine) s = "Cosine";
+	if (interpolationMethod == Cubic) s = "Cubic";
+	ImGui::Text(s.c_str());
 	if (ImGui::Button("Linear"))
 	{
 		interpolationMethod = Linear;
