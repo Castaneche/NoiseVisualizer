@@ -13,6 +13,7 @@
 
 int main()
 {
+
 	sf::RenderWindow window(sf::VideoMode(700, 600), "Noise Visualizer", sf::Style::Default);
 	window.setVerticalSyncEnabled(true);
 	ImGui::SFML::Init(window);

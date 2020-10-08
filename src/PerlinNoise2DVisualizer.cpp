@@ -84,10 +84,9 @@ void PerlinNoise2DVisualizer::Show()
 	}
 
 	//Style the menu bar to fit the Theme6
-	ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4(.8f,.8f,.8f,1.0f));
+	/*ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4(.8f,.8f,.8f,1.0f));
 	ImGui::BeginChild("2D Perlin Noise Menu Bar", ImVec2(0, 25), false, ImGuiWindowFlags_MenuBar);
 
-	/* Menu Bar */
 	ImGui::BeginMenuBar();
 	if (ImGui::BeginMenu("File"))
 	{
@@ -121,7 +120,7 @@ void PerlinNoise2DVisualizer::Show()
 	ImGui::EndMenuBar();
 
 	ImGui::EndChild();
-	ImGui::PopStyleColor();
+	ImGui::PopStyleColor();*/
 
 	ImGui::BeginChild("Perlin Noise 2D Texture", ImVec2(imageSize + 70, imageSize + 200));
 		//Display the Texture
@@ -169,7 +168,7 @@ void PerlinNoise2DVisualizer::Show()
 	{
 		interpolationMethod = Cosine;
 		update = All;
-	} ImGui::SameLine();
+	}
 	/* WIP
 	if (ImGui::Button("Cubic"))
 	{
