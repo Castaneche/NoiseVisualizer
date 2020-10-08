@@ -1,4 +1,4 @@
-#NoiseVisualizer
+# NoiseVisualizer
 Visualization of both 1D and 2D Perlin Noise Algorithm 
 
 ![](gif/NoiseVisualizer1D.gif)
