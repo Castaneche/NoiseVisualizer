@@ -41,7 +41,7 @@ void PerlinNoise2DVisualizer::Show()
 
 				if (update == All)
 				{
-					n = pn.noise(x, y, octaves, persistence, interpolationMethod);
+					n = pn.noise(x + seed*100, y + seed*100, octaves, persistence, interpolationMethod);
 					noise.push_back(n); //Update noise buffer
 				}
 				if (update == All || update == Color)

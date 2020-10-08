@@ -32,7 +32,7 @@ private:
 	int maxOctave = 8;
 	float imageSize; 
 	int pixelCount;
-	int seed = 123;
+	int seed = 123; //Seed change the noise values by applying an offset to the x and y coordinates of the PerlinNoise::noise function
 	int octaves = 1;
 	float persistence = 1.0f;
 	float frequency = 10;
