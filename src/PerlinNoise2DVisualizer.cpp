@@ -170,11 +170,12 @@ void PerlinNoise2DVisualizer::Show()
 		interpolationMethod = Cosine;
 		update = All;
 	} ImGui::SameLine();
+	/* WIP
 	if (ImGui::Button("Cubic"))
 	{
 		interpolationMethod = Cubic;
 		update = All;
-	}
+	}*/
 
 
 	/* Resolution of the image/texture */

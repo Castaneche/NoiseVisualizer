@@ -32,7 +32,7 @@ private:
 	float cosine_interpolation(float a, float b, float t);
 	float cubic_interpolation(float y0, float y1, float y2, float y3, float t);
 	float random(float a, float b); //get a random flat number between a and b
-	void mask(); //initialyze the array of random numbers
+	void mask(); //initialyze the array of random numbers 
 	double grad(int hash, double x, double y);
 	double dotProduct(int hash, int ix, int iy, int x, int y);
 
