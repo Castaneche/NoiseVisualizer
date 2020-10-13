@@ -1,8 +1,7 @@
 #include "PerlinNoise2DVisualizer.h"
 
-#include <imgui.h>
-#include <imgui-SFML.h>
-#include <implot/implot.h>
+#include "imgui.h"
+#include "implot.h"
 #include <iostream>
 
 PerlinNoise2DVisualizer::PerlinNoise2DVisualizer(float imagesize, int pixelcount)
@@ -10,138 +9,38 @@ PerlinNoise2DVisualizer::PerlinNoise2DVisualizer(float imagesize, int pixelcount
 	pn.setSeed(seed);
 
 	imageSize = imagesize;
-	resizeImg(pixelcount);
-	image.create(pixelCount, pixelCount);
+	resizeImg(pixelcount); //generate array of pixels
 
-	colors.push_back(new float[3]{ 0, 0, 0 });
-	colors.push_back(new float[3]{ 1, 1, 1 });
+	//Init Texture
+	glGenTextures(1, &texture); //Generate texture
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); //Color Interpolation
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //Color Interpolation
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1); //Set pixel storage mode to Byte-Alignment
+
+	colormap.colors.push_back(new float[3]{ 0, 0, 0 });
+	colormap.colors.push_back(new float[3]{ 1, 1, 1 });
 }
 
 
 PerlinNoise2DVisualizer::~PerlinNoise2DVisualizer()
 {
-	for (unsigned int i = 0; i < colors.size(); i++)
-		delete colors[i];
+	delete[] pixels;
 }
 
-void PerlinNoise2DVisualizer::Show()
+void PerlinNoise2DVisualizer::ShowTexture()
 {
-	if (update != None)
-	{
-		if (update == All) //Clear noise buffer
-				noise.clear();
+	//Display the Texture
+	ImGui::Image((void*)(intptr_t)1, ImVec2(imageSize, imageSize));
+	ImGui::SameLine();
+	//Show ColorMap widget
+	colormap.ShowWidget(imageSize);
+	//Display all params as a string under the texture
+	ImGui::Text("Res(%dx%d) ; Octaves(%d) ; Freq(%.2f) ; Persistence(%.2f)", pixelCount, pixelCount, octaves, frequency, persistence);
+}
 
-		double n = 0;
-		for (int i = 0; i < pixelCount; i++)
-		{
-			for (int j = 0; j < pixelCount; j++)
-			{
-				double x = i / double(pixelCount) * frequency;
-				double y = j / double(pixelCount) * frequency;
-
-				if (update == All)
-				{
-					n = pn.noise(x + seed*100, y + seed*100, octaves, persistence, interpolationMethod);
-					noise.push_back(n); //Update noise buffer
-				}
-				if (update == All || update == Color)
-				{
-					double r = 0;
-					double g = 0;
-					double b = 0;
-					double currNoiseValue = noise[(i*pixelCount) + j];
-
-					if (terrain == false) //Interpolation
-					{
-						double h = 1.0f / double(colors.size() - 1);
-						double colorIndex = std::floor(currNoiseValue / h);
-
-						double t = (currNoiseValue - colorIndex*h) / h;
-
-						r = colors[colorIndex][0] + t * (colors[colorIndex + 1][0] - colors[colorIndex][0]);
-						g = colors[colorIndex][1] + t * (colors[colorIndex + 1][1] - colors[colorIndex][1]);
-						b = colors[colorIndex][2] + t * (colors[colorIndex + 1][2] - colors[colorIndex][2]);
-
-						int index = (i + j * pixelCount) * 4;
-						pixels[index + 0] = r * 255.0f;
-						pixels[index + 1] = g * 255.0f;
-						pixels[index + 2] = b * 255.0f;
-					}
-					else //No interpolation
-					{
-						double h = 1.0f / double(colors.size());
-						double colorIndex = std::floor(currNoiseValue / h);
-
-						r = colors[colorIndex][0]; g = colors[colorIndex][1]; b = colors[colorIndex][2];
-					}
-					
-				}
-			}
-		}
-		image.create(pixelCount, pixelCount, pixels); //Apply pixels
-		texture.loadFromImage(image);
-		update = None;
-	}
-
-	//Style the menu bar to fit the Theme6
-	/*ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4(.8f,.8f,.8f,1.0f));
-	ImGui::BeginChild("2D Perlin Noise Menu Bar", ImVec2(0, 25), false, ImGuiWindowFlags_MenuBar);
-
-	ImGui::BeginMenuBar();
-	if (ImGui::BeginMenu("File"))
-	{
-		ImGui::MenuItem("Load");
-		if (ImGui::BeginMenu("Save As"))
-		{
-			ImGui::MenuItem("Preset");
-			ImGui::MenuItem("Image");
-			ImGui::EndMenu();
-		}
-		ImGui::EndMenu();
-	}
-	if (ImGui::BeginMenu("Edit"))
-	{
-		ImGui::EndMenu();
-	}
-	if (ImGui::BeginMenu("View"))
-	{
-		if (ImGui::MenuItem("Texture"))
-		{
-			update = Color;
-			terrain = false;
-		}
-		if (ImGui::MenuItem("Terrain"))
-		{
-			update = Color;
-			terrain = true;
-		}
-		ImGui::EndMenu();
-	}
-	ImGui::EndMenuBar();
-
-	ImGui::EndChild();
-	ImGui::PopStyleColor();*/
-
-	ImGui::BeginChild("Perlin Noise 2D Texture", ImVec2(imageSize + 70, imageSize + 200));
-		//Display the Texture
-		ImGui::Image(texture, sf::Vector2f(imageSize, imageSize), sf::FloatRect(0, 0, texture.getSize().x, texture.getSize().y)); 
-		ImGui::SameLine();
-		//Show a colormap diagram
-		const int N = colors.size();
-		ImVec4* a = new ImVec4[N];
-		for (int i = 0; i < N; i++)
-		{
-			a[i] = ImVec4(colors[i][0], colors[i][1], colors[i][2], 1.0f);
-		}
-		ImPlot::PushColormap(a, N);
-		ImPlot::ShowColormapScale(0, 1, imageSize);
-		ImPlot::PopColormap();
-		delete a;
-		//Display all params as a string under the texture
-		ImGui::Text("Res(%dx%d) ; Octaves(%d) ; Freq(%.2f) ; Persistence(%.2f)", pixelCount, pixelCount, octaves, frequency, persistence); 
-	ImGui::EndChild(); ImGui::SameLine();
-
-	ImGui::BeginChild("Perlin Noise 2D Setup", ImVec2(ImGui::GetWindowWidth() - (imageSize+70), imageSize + 200));
+void PerlinNoise2DVisualizer::ShowSetup()
+{
 	if (ImGui::DragInt("seed", &seed, 1.0f, 0, 1000)) //Seed selection : not yet implemented for 2D Perlin !
 	{
 		pn.setSeed(seed);
@@ -197,80 +96,86 @@ void PerlinNoise2DVisualizer::Show()
 		resizeImg(pixelCount);
 		update = All;
 	} ImGui::SameLine();
-	if (ImGui::Button("High\n(300x300)"))
+	if (ImGui::Button("High\n(250x250)"))
 	{
-		pixelCount = 300;
+		pixelCount = 250;
 		resizeImg(pixelCount);
 		update = All;
-	} 
-
-
-	/* Color palette configuration */
-	ImGui::Text("Colormap : ");
-	if (ImGui::Button("Default"))
-	{
-		update = Color;
-		for (auto c : colors)
-			delete c;
-		colors.clear();
-		colors.push_back(new float[3]{ 0, 0, 0 });
-		colors.push_back(new float[3]{ 1, 1, 1 });
-	} ImGui::SameLine();
-	if (ImGui::Button("Terrain"))
-	{
-		update = Color;
-		for (auto c : colors)
-			delete c;
-		colors.clear();
-		colors.push_back(new float[3]{ 0, 0.23, 0.54 });
-		colors.push_back(new float[3]{ 0.24, 0.90, 0.87 });
-		colors.push_back(new float[3]{ 1, 1, 0.58 });
-		colors.push_back(new float[3]{ 0.23, 0.73, 0.23 });
-		colors.push_back(new float[3]{ 0.45, 0.45, 0.45 });
-		colors.push_back(new float[3]{ 1, 1, 1 });
-	} ImGui::SameLine();
-	if (ImGui::Button("Lava"))
-	{
-		update = Color;
-		for (auto c : colors)
-			delete c;
-		colors.clear();
-		colors.push_back(new float[3]{ 1, 1, 1 });
-		colors.push_back(new float[3]{ 1, 0.94, 0 });
-		colors.push_back(new float[3]{ 0.75, 0.1, 0.1 });
-		colors.push_back(new float[3]{ 0, 0, 0 });
-
 	}
-	for (unsigned int i = 0; i < colors.size(); i++)
+
+	colormap.Show();
+}
+
+void PerlinNoise2DVisualizer::Update()
+{
+	if (colormap.updated)
 	{
-		if (ImGui::ColorEdit3(("##"+std::to_string(i)).c_str(), colors[i]))
-			update = Color;
-		ImGui::SameLine();
-		if (ImGui::Button((" - ##" + std::to_string(i)).c_str())) // '-' button next to every color
+		colormap.updated = false;
+		update = Color;
+	}
+
+
+	if (update != None)
+	{
+		if (update == All) //Clear noise buffer
+			noise.clear();
+
+		double n = 0;
+		for (int i = 0; i < pixelCount; i++)
 		{
-			update = Color;
-			if(colors.size() > 2) //2 colors required
-				colors.erase(colors.begin() + i);
-		}
-		if (i == colors.size() - 1) //Add a '+' button next to the last color
-		{
-			ImGui::SameLine();
-			if (ImGui::Button(" + "))
+			for (int j = 0; j < pixelCount; j++)
 			{
-				update = Color;
-				colors.push_back(new float[3]{ 0,0,0 });
+				double x = i / double(pixelCount) * frequency;
+				double y = j / double(pixelCount) * frequency;
+
+				if (update == All)
+				{
+					n = pn.noise(x + seed * 100, y + seed * 100, octaves, persistence, interpolationMethod);
+					noise.push_back(n); //Update noise buffer
+				}
+				if (update == All || update == Color)
+				{
+					uint8_t r = 0;
+					uint8_t g = 0;
+					uint8_t b = 0;
+					double currNoiseValue = noise[(i*pixelCount) + j];
+					
+					float h = 1.0f / double(colormap.colors.size() - 1);
+					float colorIndex = std::floor(currNoiseValue / h);
+
+					float t = (currNoiseValue - colorIndex * h) / h;
+
+					r = uint8_t(std::floor((colormap.colors[colorIndex][0] + t * (colormap.colors[colorIndex + 1][0] - colormap.colors[colorIndex][0])) * 255));
+					g = uint8_t(std::floor((colormap.colors[colorIndex][1] + t * (colormap.colors[colorIndex + 1][1] - colormap.colors[colorIndex][1])) * 255));
+					b = uint8_t(std::floor((colormap.colors[colorIndex][2] + t * (colormap.colors[colorIndex + 1][2] - colormap.colors[colorIndex][2])) * 255));
+
+					int index = (i * pixelCount + j) * 3;
+					pixels[index + 0] = r;
+					pixels[index + 1] = g;
+					pixels[index + 2] = b;
+				}
 			}
 		}
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, pixelCount, pixelCount, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+		update = None;
 	}
-	
-	ImGui::EndChild();
+}
+
+void PerlinNoise2DVisualizer::ResponsiveImg(float window_w, float window_h)
+{
+	if(window_w <= window_h)
+		imageSize = window_w - 100;
+	if (window_w > window_h)
+		imageSize = window_h - 100;
 }
 
 void PerlinNoise2DVisualizer::resizeImg(int pixelcount)
 {
+	delete[] pixels; //Clear old array
+
 	pixelCount = pixelcount;
-	nPixels = pixelCount * pixelCount * 4;
-	pixels = new sf::Uint8[nPixels];
+	int nPixels = pixelCount * pixelCount * 3;
+	pixels = new uint8_t[nPixels];
 	for (int i = 0; i < nPixels; i++)
 		pixels[i] = 255;
 }

@@ -3,12 +3,21 @@
 #include <glad/glad.h>
 #include <GLFW\glfw3.h>
 
+#include "opengl/Shader.h"
+
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "implot.h"
 
 #include <theme.h>
+
+#include "PerlinNoise1DVisualizer.h"
+#include "PerlinNoise2DVisualizer.h"
+
+#ifdef _WIN32
+	#include <Windows.h>
+#endif
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -23,6 +32,11 @@ void processInput(GLFWwindow *window)
 
 int main()
 {
+
+#ifdef _WIN32
+	FreeConsole(); //Hide console on Windows 
+#endif
+
 	// Setup window
 	glfwSetErrorCallback(glfw_error_callback);
 	if (!glfwInit())
@@ -53,8 +67,6 @@ int main()
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
 	// Setup Dear ImGui style
 	ApplyTheme6();
@@ -71,6 +83,8 @@ int main()
 	ImPlot::CreateContext();
 	ImPlot::GetStyle().AntiAliasedLines = false;
 
+	PerlinNoise1DVisualizer PerlinNoise1DVisualizer(500);
+	PerlinNoise2DVisualizer PerlinNoise2DVisualizer(300, 50);
 
 	int display_w = 0, display_h = 0;
 	while (!glfwWindowShouldClose(window))
@@ -83,23 +97,40 @@ int main()
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-
 		ImGui::Begin("Perlin Noise", 0, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove);
 		ImGui::SetWindowPos(ImVec2(0, 0));
 		ImGui::SetWindowSize(ImVec2(display_w, display_h));
-		if (ImGui::CollapsingHeader("[1D] Perlin Noise : Graph, Hills"))
-		{
-			// ...
-		}
-		if (ImGui::CollapsingHeader("[2D] Perlin Noise : Texture, Terrain"))
-		{
-			// ...
-		}
 
-		ImGui::SetCursorPosX(280);
-		ImGui::Text("Click on headers to open them");
+		//Setup Window
+		ImGui::SetNextWindowPos(ImVec2(0, 0));
+		ImGui::SetNextWindowSize(ImVec2(display_w * .35f, display_h));
+		ImGui::Begin("Setup", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+		PerlinNoise2DVisualizer.ShowSetup();
+		ImGui::End(); 
+
+		//Scene Window : texture, terrain etc...
+		ImGui::SetNextWindowPos(ImVec2(display_w * .35f, 0));
+		ImGui::SetNextWindowSize(ImVec2(display_w * .65f, display_h));
+		ImGui::Begin("Scene", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+		ImGui::BeginTabBar("SceneTabBar");
+		if (ImGui::BeginTabItem("Texture"))
+		{
+			PerlinNoise2DVisualizer.ResponsiveImg(ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
+			PerlinNoise2DVisualizer.ShowTexture();
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Terrain"))
+		{
+			ImGui::Text("Terrain *WIP*");
+			ImGui::EndTabItem();
+		}
+		ImGui::EndTabBar();
 		ImGui::End();
-		
+
+		PerlinNoise2DVisualizer.Update();
+
+		ImGui::End();
+
 
 		// Rendering
 		ImGui::Render();

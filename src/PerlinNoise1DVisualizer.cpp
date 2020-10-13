@@ -1,8 +1,8 @@
-#include "..\include\PerlinNoise1DVisualizer.h"
+#include "PerlinNoise1DVisualizer.h"
 
-#include <imgui.h>
-#include <implot/implot.h>
-#include <string>
+#include "imgui.h"
+#include "implot.h"
+#include "string"
 
 PerlinNoise1DVisualizer::PerlinNoise1DVisualizer(int n)
 {
