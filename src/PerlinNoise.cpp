@@ -86,43 +86,40 @@ double PerlinNoise::noise(double x, int octaves, double persistence, Interpolati
 
 double PerlinNoise::noise(double x, double y, Interpolation method)
 {
-	//Find relative position in unit cube
-	double xf = x - (int)std::floor(x);
-	double yf = y - (int)std::floor(y);
-
-	//Used for interpolation 
-	//A fade function can be applied to avoid some pattern with linear interpolation
-	double tx = x - (int)std::floor(x);
-	double ty = y - (int)std::floor(y);
-
 	//Look in permutation table to grab a number (this number will be converted to a gradient vector later)
-	int xi = (int)std::floor(x) & 255; //Map to 255 to over overflow of the permutation array                     
-	int yi = (int)std::floor(y) & 255;                            
+	int X = (int)std::floor(x) & 255; //Map to 255 to over overflow of the permutation array                     
+	int Y = (int)std::floor(y) & 255;                            
 	int aa, ab, ba, bb;
-	aa = p[p[xi] + yi];
-	ab = p[p[xi] + yi+1];
-	ba = p[p[xi+1] + yi];
-	bb = p[p[xi+1] + yi+1];
+	aa = p[p[X] + Y];
+	ab = p[p[X] + Y+1];
+	ba = p[p[X+1] + Y];
+	bb = p[p[X+1] + Y+1];
+
+	//Find relative position in unit cube
+	x = x - (int)std::floor(x);
+	y = y - (int)std::floor(y);
+
+	//u, v = fade  if fade function is used emplace x,y in interpolation with u, v
 
 	// 1. Applying dot product using hash values 
 	// 2. Interpolation X -> Y -> Z according to the chosen method  
 	double n0, n1, n2, n3, ix0, ix1, result;
-	n0 = grad(aa, xf, yf);
-	n1 = grad(ba, xf-1, yf);
-	n2 = grad(ab, xf, yf-1);
-	n3 = grad(bb, xf-1, yf-1);
+	n0 = grad(aa, x, y);
+	n1 = grad(ba, x-1, y);
+	n2 = grad(ab, x, y-1);
+	n3 = grad(bb, x-1, y-1);
 
 	if (method == Linear)
 	{
-		ix0 = linear_interpolation(n0, n1, tx);
-		ix1 = linear_interpolation(n2, n3, tx);
-		return (linear_interpolation(ix0, ix1, ty) + 1) / 2.0f; //normalize to 0 - 1
+		ix0 = linear_interpolation(n0, n1, x);
+		ix1 = linear_interpolation(n2, n3, x);
+		return (linear_interpolation(ix0, ix1, y) + 1) / 2.0f; //normalize to 0 - 1
 	}
 	else if (method == Cosine)
 	{
-		ix0 = cosine_interpolation(n0, n1, tx);
-		ix1 = cosine_interpolation(n2, n3, tx);
-		return ( cosine_interpolation(ix0, ix1, ty) + 1) / 2.0f; //normalize to 0 - 1
+		ix0 = cosine_interpolation(n0, n1, x);
+		ix1 = cosine_interpolation(n2, n3, x);
+		return ( cosine_interpolation(ix0, ix1, y) + 1) / 2.0f; //normalize to 0 - 1
 	}
 	else if (method == Cubic)
 	{
