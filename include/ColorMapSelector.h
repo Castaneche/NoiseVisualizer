@@ -127,8 +127,8 @@ namespace ImGui {
 		}   
 
 		ImGui::SameLine();
-		//Preset menu is on the same line as ColorMap gradient but updating the color array here produces an errors for the widget underneath
-		//Solution : instantiate menu here and fill it at the end of the function
+		//Preset menu is on the same line as ColorMap gradient but updating the color array here produces an error for the widgets underneath
+		//Solution : instantiate the menu here and fill it later (at the end of the function)
 		if (ImGui::BeginMenu("Presets"))
 		{
 			ImGui::EndMenu();

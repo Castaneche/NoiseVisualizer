@@ -126,7 +126,6 @@ int main()
 		{
 			PerlinNoise2DVisualizer.ResponsiveImg(ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
 			PerlinNoise2DVisualizer.ShowTexture();
-			PerlinNoise2DVisualizer.Update();
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Terrain"))
