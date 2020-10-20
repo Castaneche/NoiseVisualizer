@@ -10,6 +10,24 @@
  First call ColorMapSelector() then retreive the color with ColorValue() 
  Huge perf issues -> code need to be reworked */
 namespace ImGui {
+	static std::vector<ImVec4> COLORMAP_DEFAULT = {
+		ImVec4(0, 0, 0, 0),
+		ImVec4(1, 1, 1, 1)
+	};
+	static std::vector<ImVec4> COLORMAP_TERRAIN = {
+		ImVec4(0, 0.23, 0.54, 0),
+		ImVec4(0.24, 0.90, 0.87, 0.2),
+		ImVec4(1, 1, 0.58, 0.4),
+		ImVec4(0.23, 0.73, 0.23, 0.6),
+		ImVec4(0.45, 0.45, 0.45, 0.8),
+		ImVec4(1, 1, 1, 1)
+	};
+	static std::vector<ImVec4> COLORMAP_LAVA = {
+		ImVec4(1, 1, 1, 0),
+		ImVec4(1, 0.94, 0, 0.3),
+		ImVec4(0.75, 0.1, 0.1, 0.6),
+		ImVec4(0, 0, 0, 1)
+	};
 
 	ImVec4 ColorValue(std::vector<ImVec4>& colors, float x) //x [0 - 1]
 	{
@@ -108,9 +126,13 @@ namespace ImGui {
 			}
 		}   
 
-		int hovered = IsItemActive() || IsItemHovered();
-
-		hovered |= 0 != ItemHoverable(bb, id);
+		ImGui::SameLine();
+		//Preset menu is on the same line as ColorMap gradient but updating the color array here produces an errors for the widget underneath
+		//Solution : instantiate menu here and fill it at the end of the function
+		if (ImGui::BeginMenu("Presets"))
+		{
+			ImGui::EndMenu();
+		}
 		
 
 		std::vector<float> pos;
@@ -158,6 +180,27 @@ namespace ImGui {
 		}
 
 		Dummy(ImVec2(0, 5));
+
+		//Fill the preset menu
+		if (ImGui::BeginMenu("Presets"))
+		{
+			if (ImGui::MenuItem("Default"))
+			{
+				colors = COLORMAP_DEFAULT;
+				changed = true;
+			}
+			if (ImGui::MenuItem("Terrain"))
+			{
+				colors = COLORMAP_TERRAIN;
+				changed = true;
+			}
+			if (ImGui::MenuItem("Lava"))
+			{
+				colors = COLORMAP_LAVA;
+				changed = true;
+			}
+			ImGui::EndMenu();
+		}
 
 		return changed;
 	}

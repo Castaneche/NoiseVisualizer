@@ -56,8 +56,11 @@ void PerlinNoise2DVisualizer::ShowSetup()
 	}
 	if (ImGui::SliderInt("Octaves", &octaves, 1, 8))
 		update = All;
-	if (ImGui::DragFloat("Persistence", &persistence, .01f, 0.0f, 10.0f))
-		update = All;
+	if (octaves > 1)
+	{
+		if (ImGui::DragFloat("Persistence", &persistence, .01f, 0.0f, 10.0f))
+			update = All;
+	}
 	if (ImGui::DragFloat("Frequency", &frequency, 0.1, 0, 500))
 		update = All;
 	ImGui::Text("Interpolation : "); ImGui::SameLine();
