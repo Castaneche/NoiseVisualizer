@@ -2,6 +2,7 @@
 
 #include "imgui.h"
 #include "implot.h"
+#include "ColorMapSelector.h"
 #include <iostream>
 
 PerlinNoise2DVisualizer::PerlinNoise2DVisualizer(float imagesize, int pixelcount)
@@ -17,9 +18,15 @@ PerlinNoise2DVisualizer::PerlinNoise2DVisualizer(float imagesize, int pixelcount
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); //Color Interpolation
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //Color Interpolation
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1); //Set pixel storage mode to Byte-Alignment
+	glBindTexture(GL_TEXTURE_2D, 0);
 
-	colormap.colors.push_back(new float[3]{ 0, 0, 0 });
-	colormap.colors.push_back(new float[3]{ 1, 1, 1 });
+	//colormap.colors.push_back(new float[3]{ 0, 0, 0 });
+	//colormap.colors.push_back(new float[3]{ 1, 1, 1 });
+
+	colors.push_back(ImVec4(0, 0, 0, 0));
+	colors.push_back(ImVec4(1, 1, 1, 0.5));
+	colors.push_back(ImVec4(1, 0, 0, .8));
+	colors.push_back(ImVec4(1, 0, 1, 0));
 }
 
 
@@ -32,15 +39,16 @@ void PerlinNoise2DVisualizer::ShowTexture()
 {
 	//Display the Texture
 	ImGui::Image((void*)(intptr_t)1, ImVec2(imageSize, imageSize));
-	ImGui::SameLine();
+	//ImGui::SameLine();
 	//Show ColorMap widget
-	colormap.ShowWidget(imageSize);
+	//colormap.ShowWidget(imageSize);
 	//Display all params as a string under the texture
 	ImGui::Text("Res(%dx%d) ; Octaves(%d) ; Freq(%.2f) ; Persistence(%.2f)", pixelCount, pixelCount, octaves, frequency, persistence);
 }
 
 void PerlinNoise2DVisualizer::ShowSetup()
 {
+	ImGui::Indent(10);
 	if (ImGui::DragInt("seed", &seed, 1.0f, 0, 1000)) //Seed selection : not yet implemented for 2D Perlin !
 	{
 		pn.setSeed(seed);
@@ -103,17 +111,18 @@ void PerlinNoise2DVisualizer::ShowSetup()
 		update = All;
 	}
 
-	colormap.Show();
+	//colormap.Show();
+	if (ImGui::ColorMapSelector("Hello", colors))
+		update = Color;
 }
 
 void PerlinNoise2DVisualizer::Update()
 {
-	if (colormap.updated)
+	/*if (colormap.updated)
 	{
 		colormap.updated = false;
 		update = Color;
-	}
-
+	}*/
 
 	if (update != None)
 	{
@@ -140,23 +149,27 @@ void PerlinNoise2DVisualizer::Update()
 					uint8_t b = 0;
 					double currNoiseValue = noise[(i*pixelCount) + j];
 					
-					float h = 1.0f / double(colormap.colors.size() - 1);
+					//float h = 1.0f / double(colormap.colors.size() - 1);
+					float h = 1;
 					float colorIndex = std::floor(currNoiseValue / h);
 
 					float t = (currNoiseValue - colorIndex * h) / h;
 
-					r = uint8_t(std::floor((colormap.colors[colorIndex][0] + t * (colormap.colors[colorIndex + 1][0] - colormap.colors[colorIndex][0])) * 255));
-					g = uint8_t(std::floor((colormap.colors[colorIndex][1] + t * (colormap.colors[colorIndex + 1][1] - colormap.colors[colorIndex][1])) * 255));
-					b = uint8_t(std::floor((colormap.colors[colorIndex][2] + t * (colormap.colors[colorIndex + 1][2] - colormap.colors[colorIndex][2])) * 255));
+					//r = uint8_t(std::floor((colormap.colors[colorIndex][0] + t * (colormap.colors[colorIndex + 1][0] - colormap.colors[colorIndex][0])) * 255));
+					//g = uint8_t(std::floor((colormap.colors[colorIndex][1] + t * (colormap.colors[colorIndex + 1][1] - colormap.colors[colorIndex][1])) * 255));
+					//b = uint8_t(std::floor((colormap.colors[colorIndex][2] + t * (colormap.colors[colorIndex + 1][2] - colormap.colors[colorIndex][2])) * 255));
 
 					int index = (i * pixelCount + j) * 3;
-					pixels[index + 0] = r;
-					pixels[index + 1] = g;
-					pixels[index + 2] = b;
+					auto c = ImGui::ColorValue(colors, currNoiseValue);
+					pixels[index + 0] = uint8_t(c.x * 255);
+					pixels[index + 1] = uint8_t(c.y * 255);
+					pixels[index + 2] = uint8_t(c.z * 255);
 				}
 			}
 		}
+		glBindTexture(GL_TEXTURE_2D, texture);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, pixelCount, pixelCount, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+		glBindTexture(GL_TEXTURE_2D, 0);
 		update = None;
 	}
 }

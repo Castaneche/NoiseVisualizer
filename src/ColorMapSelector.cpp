@@ -1,9 +1,4 @@
-#include "ColorMapSelector.h"
-
-#include "imgui.h"
-#include "implot.h"
-#include <string>
-
+/*
 ColorMapSelector::ColorMapSelector()
 {
 }
@@ -17,7 +12,6 @@ ColorMapSelector::~ColorMapSelector()
 
 void ColorMapSelector::Show()
 {
-	/* Color palette configuration */
 	ImGui::Text("Colormap : ");
 	if (ImGui::Button("Default"))
 	{
@@ -90,3 +84,4 @@ void ColorMapSelector::ShowWidget(float height)
 	ImPlot::PopColormap();
 	delete a;
 }
+*/

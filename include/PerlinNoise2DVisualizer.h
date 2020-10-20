@@ -2,8 +2,9 @@
 
 #include "glad/glad.h"
 
+#include "imgui.h"
+
 #include <PerlinNoise.h>
-#include "ColorMapSelector.h"
 #include <string>
 
 class PerlinNoise2DVisualizer
@@ -41,5 +42,5 @@ private:
 	Interpolation interpolationMethod = Cosine; 
 	bool terrain = false;
 
-	ColorMapSelector colormap;
+	std::vector<ImVec4> colors;
 };
