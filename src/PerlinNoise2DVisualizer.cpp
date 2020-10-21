@@ -26,28 +26,31 @@ PerlinNoise2DVisualizer::PerlinNoise2DVisualizer(float imagesize, int pixelcount
 
 PerlinNoise2DVisualizer::~PerlinNoise2DVisualizer()
 {
+	t->join(); //Join thread to prevent accessing deleted variables
+	delete t;
 	delete[] pixels;
 }
 void PerlinNoise2DVisualizer::ShowTexture()
 {
 	if (update == true)
 	{
+		std::lock_guard<std::mutex> guard(mutex);
 		//Retreive isCalculating boolean
-		bool b;
-		{
-			std::lock_guard<std::mutex> guard(mutex);
-			b = isCalculating;
-		}
+		bool b = true;
+		b = isCalculating;
 		if (!b) //Previous noise calculation is done. We can update with the new params
 		{
-			t = std::thread(&PerlinNoise2DVisualizer::Calculate, this);
-			t.detach(); //Use join() to calculate noise instantly (huge freeze on high resolution texture)
+			t = new std::thread(&PerlinNoise2DVisualizer::Calculate, this); 
+			isCalculating = true;
 			update = false;
 		}
 	}
 
 	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, pixelCount, pixelCount, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+	{
+		std::lock_guard<std::mutex> guard(mutex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, pixelCount, pixelCount, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+	}
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	//Display the Texture
@@ -101,27 +104,23 @@ void PerlinNoise2DVisualizer::ShowSetup()
 	ImGui::Text("Resolution : ");
 	if (ImGui::Button("Very Low\n(50x50)"))
 	{
-		pixelCount = 50;
-		resizeImg(pixelCount);
-		update = true;
+		resizeImg(50);
+		if (!isCalculating) update = true; //Resizing image while processing noise texture is not allowed
 	} ImGui::SameLine();
 	if (ImGui::Button("Low\n(100x100)"))
 	{
-		pixelCount = 100;
-		resizeImg(pixelCount);
-		update = true;
+		resizeImg(100);
+		if (!isCalculating) update = true;
 	} ImGui::SameLine();
 	if (ImGui::Button("Medium\n(150x150)"))
 	{
-		pixelCount = 150;
-		resizeImg(pixelCount);
-		update = true;
+		resizeImg(150);
+		if (!isCalculating) update = true;
 	} ImGui::SameLine();
 	if (ImGui::Button("High\n(250x250)"))
 	{
-		pixelCount = 250;
-		resizeImg(pixelCount);
-		update = true;
+		resizeImg(250);
+		if (!isCalculating) update = true;
 	}
 
 	//colormap.Show();
@@ -140,24 +139,25 @@ void PerlinNoise2DVisualizer::ResponsiveImg(float window_w, float window_h)
 void PerlinNoise2DVisualizer::Calculate()
 {
 	uint8_t* pixelsCopy;
+	int pixelCountCopy;
 	{ //Lock data while copying
 		std::lock_guard<std::mutex> guard(mutex);
 		pixelsCopy = pixels; //copy pixel array
-		isCalculating = true;
+		pixelCountCopy = pixelCount;
 	}
 	//We will update a copy of the actual pixel array to avoid accessing the same data in different threads
 	double n = 0;
-	for (int i = 0; i < pixelCount; i++)
+	for (int i = 0; i < pixelCountCopy; i++)
 	{
-		for (int j = 0; j < pixelCount; j++)
+		for (int j = 0; j < pixelCountCopy; j++)
 		{
 			//Noise calculation
-			double x = i / double(pixelCount) * frequency;
-			double y = j / double(pixelCount) * frequency;
+			double x = i / double(pixelCountCopy) * frequency;
+			double y = j / double(pixelCountCopy) * frequency;
 			n = pn.noise(x + seed * 100, y + seed * 100, octaves, persistence, interpolationMethod);
 
 			//Pixel calculation
-			int index = (i * pixelCount + j) * 3;
+			int index = (i * pixelCountCopy + j) * 3;
 			auto c = ImGui::ColorValue(colors, n);
 			pixelsCopy[index + 0] = uint8_t(c.x * 255);
 			pixelsCopy[index + 1] = uint8_t(c.y * 255);
@@ -167,7 +167,7 @@ void PerlinNoise2DVisualizer::Calculate()
 	{ 
 		std::lock_guard<std::mutex> guard(mutex);
 		std::swap(pixelsCopy, pixels); //paste pixels array
-		isCalculating = false;
+		isCalculating = false; //calculation done
 	}
 
 }
@@ -175,8 +175,10 @@ void PerlinNoise2DVisualizer::Calculate()
 
 void PerlinNoise2DVisualizer::resizeImg(int pixelcount)
 {
+	if(!isCalculating)
 	{ //lock data while updating the array
 		std::lock_guard<std::mutex> guard(mutex);
+
 		delete[] pixels; //Clear old array
 
 		pixelCount = pixelcount;

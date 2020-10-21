@@ -23,7 +23,7 @@ private:
 	void resizeImg(int pixelcount);
 	void Calculate();
 
-	std::thread t; //Calculation thread
+	std::thread* t; //Calculation thread
 	std::mutex mutex; 
 	bool isCalculating; // variable to know when a calculation thread is running to avoid initializing the threads infinitely (1 thread max)
 
