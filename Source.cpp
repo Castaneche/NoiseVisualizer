@@ -6,11 +6,11 @@
 #include "opengl/Shader.h"
 
 #include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_opengl3.h"
 #include "implot.h"
 
-#include <theme.h>
+#include "theme.h"
 
 #include "PerlinNoise1DVisualizer.h"
 #include "PerlinNoise2DVisualizer.h"
@@ -67,6 +67,14 @@ int main()
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	//Enable docking features
+	io.ConfigFlags = ImGuiConfigFlags_DockingEnable;
+	io.ConfigDockingAlwaysTabBar = true;
+	bool open = true;
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking; //Main docking window flags
+	//fullscreen flags
+	window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+	window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
 	// Setup Dear ImGui style
 	ApplyTheme1();
@@ -98,14 +106,18 @@ int main()
 		ImGui::NewFrame();
 
 
-
+		ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
 		ImGui::BeginMainMenuBar();
-		if (ImGui::BeginMenu("Theme"))
+		if (ImGui::BeginMenu("Edit"))
 		{
-			if (ImGui::Button("Light"))
-				ApplyTheme6();
-			if (ImGui::Button("Dark"))
-				ApplyTheme1();
+			if (ImGui::BeginMenu("Theme"))
+			{
+				if (ImGui::Button("Light"))
+					ImGui::StyleColorsLight();
+				if (ImGui::Button("Dark"))
+					ApplyTheme1();
+				ImGui::EndMenu();
+			}
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
@@ -113,29 +125,22 @@ int main()
 		//Setup Window
 		ImGui::SetNextWindowPos(ImVec2(0, 25));
 		ImGui::SetNextWindowSize(ImVec2(display_w * .35f, display_h -25));
-		ImGui::Begin("Setup", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+		ImGui::Begin("Setup");
 		PerlinNoise2DVisualizer.ShowSetup();
 		ImGui::End(); 
 
 		//Scene Window : texture, terrain etc...
-		ImGui::SetNextWindowPos(ImVec2(display_w * .35f, 25));
-		ImGui::SetNextWindowSize(ImVec2(display_w * .65f, display_h - 25));
-		ImGui::Begin("Scene", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
-		ImGui::BeginTabBar("SceneTabBar");
-		if (ImGui::BeginTabItem("Texture"))
-		{
-			PerlinNoise2DVisualizer.ResponsiveImg(ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
-			PerlinNoise2DVisualizer.ShowTexture();
-			ImGui::EndTabItem();
-		}
-		if (ImGui::BeginTabItem("Terrain"))
-		{
-			ImGui::Text("Terrain *WIP*");
-			ImGui::EndTabItem();
-		}
-		ImGui::EndTabBar();
+
+		ImGui::Begin("Terrain");
+		ImGui::Text("Terrain *WIP*");
 		ImGui::End();
 
+		ImGui::SetNextWindowPos(ImVec2(display_w * .35f, 25));
+		ImGui::SetNextWindowSize(ImVec2(display_w * .65f, display_h - 25));
+		ImGui::Begin("Texture");
+		PerlinNoise2DVisualizer.ResponsiveImg(ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
+		PerlinNoise2DVisualizer.ShowTexture();
+		ImGui::End();
 
 		// Rendering
 		ImGui::Render();

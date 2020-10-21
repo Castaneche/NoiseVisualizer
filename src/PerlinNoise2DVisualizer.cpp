@@ -26,9 +26,13 @@ PerlinNoise2DVisualizer::PerlinNoise2DVisualizer(float imagesize, int pixelcount
 
 PerlinNoise2DVisualizer::~PerlinNoise2DVisualizer()
 {
-	t->join(); //Join thread to prevent accessing deleted variables
-	delete t;
-	delete[] pixels;
+	if (t)
+	{
+		t->join(); //Join thread to prevent accessing deleted variables
+		delete t;
+	}
+	if(pixels)
+		delete[] pixels;
 }
 void PerlinNoise2DVisualizer::ShowTexture()
 {
