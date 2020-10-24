@@ -26,7 +26,7 @@ PerlinNoise2DVisualizer::PerlinNoise2DVisualizer(float imagesize, int pixelcount
 
 PerlinNoise2DVisualizer::~PerlinNoise2DVisualizer()
 {
-	if (t)
+	if (t->joinable())
 	{
 		t->join(); //Join thread to prevent accessing deleted variables
 		delete t;
@@ -138,6 +138,18 @@ void PerlinNoise2DVisualizer::ResponsiveImg(float window_w, float window_h)
 		imageSize = window_w - 100;
 	if (window_w > window_h)
 		imageSize = window_h - 100;
+}
+
+uint8_t * PerlinNoise2DVisualizer::GetPixels()
+{
+	if (t->joinable())
+		t->join();
+	return &*pixels;
+}
+
+int PerlinNoise2DVisualizer::GetPixelCount()
+{
+	return pixelCount;
 }
 
 void PerlinNoise2DVisualizer::Calculate()

@@ -15,6 +15,8 @@
 #include "PerlinNoise1DVisualizer.h"
 #include "PerlinNoise2DVisualizer.h"
 
+#include "Functions.h"
+
 #ifdef _WIN32
 	#include <Windows.h>
 #endif
@@ -79,6 +81,10 @@ int main()
 	//Enable viewports (call after 'enable docking' or an assertion (IM_ASSERT) is called)
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
 
+	bool graph_window = false, terrain_window = false, texture_window = true;
+
+	bool export_window = false;
+	char filename[128] = "";
 
 	// Setup Dear ImGui style
 	ApplyTheme1();
@@ -132,6 +138,13 @@ int main()
 			}
 			ImGui::EndMenu();
 		}
+		if (ImGui::BeginMenu("View"))
+		{
+			ImGui::MenuItem("Graph", NULL, &graph_window);
+			ImGui::MenuItem("Texture", NULL, &texture_window);
+			ImGui::MenuItem("Terrain", NULL, &terrain_window);
+			ImGui::EndMenu();
+		}
 		ImGui::EndMainMenuBar();
 
 		//Setup Window
@@ -142,17 +155,49 @@ int main()
 		ImGui::End(); 
 
 		//Scene Window : texture, terrain etc...
+		if (graph_window)
+		{
+			ImGui::Begin("Graph", &graph_window);
+			PerlinNoise1DVisualizer.Show();
+			ImGui::End();
+		}
 
-		ImGui::Begin("Terrain");
-		ImGui::Text("Terrain *WIP*");
-		ImGui::End();
+		if (terrain_window)
+		{
+			ImGui::Begin("Terrain", &terrain_window);
+			ImGui::Text("Terrain *WIP*");
+			ImGui::End();
+		}
 
-		ImGui::SetNextWindowPos(ImVec2(display_w * .35f, 25));
-		ImGui::SetNextWindowSize(ImVec2(display_w * .65f, display_h - 25));
-		ImGui::Begin("Texture");
-		PerlinNoise2DVisualizer.ResponsiveImg(ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
-		PerlinNoise2DVisualizer.ShowTexture();
-		ImGui::End();
+		if (texture_window)
+		{
+			ImGui::Begin("Texture", &texture_window, ImGuiWindowFlags_MenuBar);
+			if (ImGui::BeginMenuBar())
+			{
+				if (ImGui::BeginMenu("File"))
+				{
+					if (ImGui::BeginMenu("Save As"))
+					{
+						ImGui::MenuItem("pgm", NULL, &export_window);
+						ImGui::EndMenu();
+					}
+					ImGui::EndMenu();
+				}
+				ImGui::EndMenuBar();
+			}
+			PerlinNoise2DVisualizer.ResponsiveImg(ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
+			PerlinNoise2DVisualizer.ShowTexture();
+			ImGui::End();
+		}
+
+		if (export_window)
+		{
+			ImGui::Begin("Export", &export_window);
+			ImGui::InputText("name", filename, IM_ARRAYSIZE(filename));
+			if (ImGui::Button("Export")) save_image(filename, PerlinNoise2DVisualizer.GetPixels(), PerlinNoise2DVisualizer.GetPixelCount(), PerlinNoise2DVisualizer.GetPixelCount());
+			ImGui::End();
+		}
+
 
 		// Rendering
 		ImGui::Render();

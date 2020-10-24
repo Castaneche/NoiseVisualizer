@@ -19,6 +19,8 @@ public:
 
 	void ResponsiveImg(float window_w, float window_h); //Resize imgui texture according to w and h values
 
+	uint8_t* GetPixels();
+	int GetPixelCount();
 private: 
 	void resizeImg(int pixelcount);
 	void Calculate();
