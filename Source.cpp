@@ -20,6 +20,7 @@
 #include "Texture.h"
 
 #include "Setup.h"
+#include "ColorMapSelector.h"
 
 #include "Functions.h"
 
@@ -44,7 +45,7 @@ int main()
 {
 
 #ifdef _WIN32
-	//FreeConsole(); //Hide console on Windows 
+	FreeConsole(); //Hide console on Windows 
 #endif
 
 	// Setup window
@@ -125,11 +126,11 @@ int main()
 	setupdata->persistence = 1;
 	setupdata->frequency = 10;
 	setupdata->interpolationMethod = Cosine;
-	//setupdata->colors = ImGui::COLORMAP_DEFAULT;
+	setupdata->colors = ImGui::COLORMAP_DEFAULT;
 
 	PerlinNoise1DVisualizer PerlinNoise1DVisualizer(500);
 	Texture texture(300, 50, setupdata);
-	Terrain terrain(50, 50, setupdata);
+	Terrain terrain(250, 250, setupdata);
 	terrain.loadShader("res/shaders/vertex.vert", "res/shaders/fragment.frag");
 
 	int display_w = 0, display_h = 0;

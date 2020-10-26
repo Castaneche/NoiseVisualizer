@@ -4,6 +4,8 @@
 #include "implot.h"
 #include <iostream>
 
+#include "ColorMapSelector.h"
+
 Texture::Texture(float imagesize, int pixelcount, std::shared_ptr<SetupData> setupdata)
 {
 	this->setupdata = setupdata;
@@ -128,8 +130,8 @@ void Texture::Calculate()
 
 			//Pixel calculation
 			int index = (i * pixelCountCopy + j) * 3;
-			//auto c = ImGui::ColorValue(setupdata->colors, n);
-			ImVec4 c(0,0,0,0);
+			auto c = ImGui::ColorValue(setupdata->colors, n);
+			//ImVec4 c(0,0,0,0);
 			pixelsCopy[index + 0] = uint8_t(c.x * 255);
 			pixelsCopy[index + 1] = uint8_t(c.y * 255);
 			pixelsCopy[index + 2] = uint8_t(c.z * 255);

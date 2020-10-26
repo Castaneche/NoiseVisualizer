@@ -141,7 +141,33 @@ void Terrain::RenderTerrain()
 
 void Terrain::ShowSetup()
 {
-	if (ImGui::SliderFloat("Maximum Height", &maxHeight, 0, 50))
+	/* Resolution of the image/texture */
+	ImGui::Text("Resolution : ");
+	if (ImGui::Button("Very Low\n(50x50)"))
+	{
+		width = 50; height = 50;
+		generate = true;
+		if (!isCalculating) update = true; //Resizing image while processing noise texture is not allowed
+	} ImGui::SameLine();
+	if (ImGui::Button("Low\n(100x100)"))
+	{
+		width = 100; height = 100;
+		generate = true;
+		if (!isCalculating) update = true;
+	}ImGui::SameLine();
+	if (ImGui::Button("Medium\n(150x150)"))
+	{
+		width = 150; height = 150;
+		generate = true;
+		if (!isCalculating) update = true;
+	} ImGui::SameLine();
+	if (ImGui::Button("High\n(250x250)"))
+	{
+		width = 250; height = 250;
+		generate = true;
+		if (!isCalculating) update = true;
+	}
+	if (ImGui::SliderFloat("Maximum Height", &maxHeight, 0, 200))
 		update = true;
 	ImGui::SliderFloat("Rotation Speed", &rotationSpeed, 0, 10);
 }

@@ -1,5 +1,7 @@
 #include "Setup.h"
 
+#include "ColorMapSelector.h"
+
 void ShowSetupWindow(SetupData& setupdata)
 {
 	ImGui::Indent(10);
@@ -41,6 +43,6 @@ void ShowSetupWindow(SetupData& setupdata)
 	}*/
 
 
-	/*if (ImGui::ColorMapSelector("Hello", setupdata.colors))
-		setupdata.updated = true;*/
+	if (ImGui::ColorMapSelector("Hello", setupdata.colors))
+		setupdata.updated = true;
 }

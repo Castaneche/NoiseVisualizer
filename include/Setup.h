@@ -15,7 +15,7 @@ struct SetupData
 	float frequency;
 	Interpolation interpolationMethod;
 	PerlinNoise pn;
-	//std::vector<ImVec4> colors;
+	std::vector<ImVec4> colors;
 	bool updated; 
 };
 
