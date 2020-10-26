@@ -1,13 +1,12 @@
-#include "PerlinNoise2DVisualizer.h"
+#include "Texture.h"
 
 #include "imgui.h"
 #include "implot.h"
-#include "ColorMapSelector.h"
 #include <iostream>
 
-PerlinNoise2DVisualizer::PerlinNoise2DVisualizer(float imagesize, int pixelcount)
+Texture::Texture(float imagesize, int pixelcount, std::shared_ptr<SetupData> setupdata)
 {
-	pn.setSeed(seed);
+	this->setupdata = setupdata;
 
 	imageSize = imagesize;
 	resizeImg(pixelcount); //generate array of pixels
@@ -19,14 +18,12 @@ PerlinNoise2DVisualizer::PerlinNoise2DVisualizer(float imagesize, int pixelcount
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //Color Interpolation
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1); //Set pixel storage mode to Byte-Alignment
 	glBindTexture(GL_TEXTURE_2D, 0);
-
-	colors = ImGui::COLORMAP_DEFAULT;
 }
 
 
-PerlinNoise2DVisualizer::~PerlinNoise2DVisualizer()
+Texture::~Texture()
 {
-	if (t->joinable())
+	if (t != nullptr && t->joinable())
 	{
 		t->join(); //Join thread to prevent accessing deleted variables
 		delete t;
@@ -34,9 +31,9 @@ PerlinNoise2DVisualizer::~PerlinNoise2DVisualizer()
 	if(pixels)
 		delete[] pixels;
 }
-void PerlinNoise2DVisualizer::ShowTexture()
+void Texture::ShowTexture()
 {
-	if (update == true)
+	if (update == true || setupdata->updated == true)
 	{
 		std::lock_guard<std::mutex> guard(mutex);
 		//Retreive isCalculating boolean
@@ -44,9 +41,9 @@ void PerlinNoise2DVisualizer::ShowTexture()
 		b = isCalculating;
 		if (!b) //Previous noise calculation is done. We can update with the new params
 		{
-			t = new std::thread(&PerlinNoise2DVisualizer::Calculate, this); 
+			t = new std::thread(&Texture::Calculate, this);
 			isCalculating = true;
-			update = false;
+			update = false; //Local variable can be reset here but setupdata->updated will be reset in Source.cpp at the end of the frame 
 		}
 	}
 
@@ -60,50 +57,11 @@ void PerlinNoise2DVisualizer::ShowTexture()
 	//Display the Texture
 	ImGui::Image((void*)(intptr_t)1, ImVec2(imageSize, imageSize));
 	//Display all params as a string under the texture
-	ImGui::Text("Res(%dx%d) ; Octaves(%d) ; Freq(%.2f) ; Persistence(%.2f)", pixelCount, pixelCount, octaves, frequency, persistence);
+	ImGui::Text("Res(%dx%d) ; Octaves(%d) ; Freq(%.2f) ; Persistence(%.2f)", pixelCount, pixelCount, setupdata->octaves, setupdata->frequency, setupdata->persistence);
 }
 
-void PerlinNoise2DVisualizer::ShowSetup()
+void Texture::ShowSetup()
 {
-	ImGui::Indent(10);
-	if (ImGui::DragInt("seed", &seed, 1.0f, 0, 1000)) //Seed selection : not yet implemented for 2D Perlin !
-	{
-		pn.setSeed(seed);
-		update = true;
-	}
-	if (ImGui::SliderInt("Octaves", &octaves, 1, 8))
-		update = true;
-	if (octaves > 1)
-	{
-		if (ImGui::DragFloat("Persistence", &persistence, .01f, 0.0f, 10.0f))
-			update = true;
-	}
-	if (ImGui::DragFloat("Frequency", &frequency, 0.1, 0, 500))
-		update = true;
-	ImGui::Text("Interpolation : "); ImGui::SameLine();
-	std::string s = "";
-	if (interpolationMethod == Linear) s = "Linear";
-	if (interpolationMethod == Cosine) s = "Cosine";
-	if (interpolationMethod == Cubic) s = "Cubic";
-	ImGui::Text(s.c_str());
-	if (ImGui::Button("Linear"))
-	{
-		interpolationMethod = Linear;
-		update = true;
-	} ImGui::SameLine();
-	if (ImGui::Button("Cosine"))
-	{
-		interpolationMethod = Cosine;
-		update = true;
-	}
-	/* WIP
-	if (ImGui::Button("Cubic"))
-	{
-		interpolationMethod = Cubic;
-		update = All;
-	}*/
-
-
 	/* Resolution of the image/texture */
 	ImGui::Text("Resolution : ");
 	if (ImGui::Button("Very Low\n(50x50)"))
@@ -115,7 +73,7 @@ void PerlinNoise2DVisualizer::ShowSetup()
 	{
 		resizeImg(100);
 		if (!isCalculating) update = true;
-	} ImGui::SameLine();
+	}ImGui::SameLine();
 	if (ImGui::Button("Medium\n(150x150)"))
 	{
 		resizeImg(150);
@@ -126,13 +84,9 @@ void PerlinNoise2DVisualizer::ShowSetup()
 		resizeImg(250);
 		if (!isCalculating) update = true;
 	}
-
-	//colormap.Show();
-	if (ImGui::ColorMapSelector("Hello", colors))
-		update = true;
 }
 
-void PerlinNoise2DVisualizer::ResponsiveImg(float window_w, float window_h)
+void Texture::ResponsiveImg(float window_w, float window_h)
 {
 	if(window_w <= window_h)
 		imageSize = window_w - 100;
@@ -140,19 +94,19 @@ void PerlinNoise2DVisualizer::ResponsiveImg(float window_w, float window_h)
 		imageSize = window_h - 100;
 }
 
-uint8_t * PerlinNoise2DVisualizer::GetPixels()
+uint8_t * Texture::GetPixels()
 {
 	if (t->joinable())
 		t->join();
 	return &*pixels;
 }
 
-int PerlinNoise2DVisualizer::GetPixelCount()
+int Texture::GetPixelCount()
 {
 	return pixelCount;
 }
 
-void PerlinNoise2DVisualizer::Calculate()
+void Texture::Calculate()
 {
 	uint8_t* pixelsCopy;
 	int pixelCountCopy;
@@ -168,13 +122,14 @@ void PerlinNoise2DVisualizer::Calculate()
 		for (int j = 0; j < pixelCountCopy; j++)
 		{
 			//Noise calculation
-			double x = i / double(pixelCountCopy) * frequency;
-			double y = j / double(pixelCountCopy) * frequency;
-			n = pn.noise(x + seed * 100, y + seed * 100, octaves, persistence, interpolationMethod);
+			double x = i / double(pixelCountCopy) * setupdata->frequency;
+			double y = j / double(pixelCountCopy) * setupdata->frequency;
+			n = setupdata->pn.noise(x + setupdata->seed * 100, y + setupdata->seed * 100, setupdata->octaves, setupdata->persistence, setupdata->interpolationMethod);
 
 			//Pixel calculation
 			int index = (i * pixelCountCopy + j) * 3;
-			auto c = ImGui::ColorValue(colors, n);
+			//auto c = ImGui::ColorValue(setupdata->colors, n);
+			ImVec4 c(0,0,0,0);
 			pixelsCopy[index + 0] = uint8_t(c.x * 255);
 			pixelsCopy[index + 1] = uint8_t(c.y * 255);
 			pixelsCopy[index + 2] = uint8_t(c.z * 255);
@@ -187,9 +142,7 @@ void PerlinNoise2DVisualizer::Calculate()
 	}
 
 }
-
-
-void PerlinNoise2DVisualizer::resizeImg(int pixelcount)
+void Texture::resizeImg(int pixelcount)
 {
 	if(!isCalculating)
 	{ //lock data while updating the array

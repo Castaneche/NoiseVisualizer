@@ -3,6 +3,10 @@
 #include <glad/glad.h>
 #include <GLFW\glfw3.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include "opengl/Shader.h"
 
 #include "imgui.h"
@@ -13,9 +17,13 @@
 #include "theme.h"
 
 #include "PerlinNoise1DVisualizer.h"
-#include "PerlinNoise2DVisualizer.h"
+#include "Texture.h"
+
+#include "Setup.h"
 
 #include "Functions.h"
+
+#include "Terrain.h"
 
 #ifdef _WIN32
 	#include <Windows.h>
@@ -36,7 +44,7 @@ int main()
 {
 
 #ifdef _WIN32
-	FreeConsole(); //Hide console on Windows 
+	//FreeConsole(); //Hide console on Windows 
 #endif
 
 	// Setup window
@@ -65,6 +73,8 @@ int main()
 		return -1;
 	}
 
+	glEnable(GL_DEPTH_TEST);
+
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -81,7 +91,7 @@ int main()
 	//Enable viewports (call after 'enable docking' or an assertion (IM_ASSERT) is called)
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
 
-	bool graph_window = false, terrain_window = false, texture_window = true;
+	bool graph_window = false, terrain_window = true, texture_window = true;
 
 	bool export_window = false;
 	char filename[128] = "";
@@ -109,8 +119,18 @@ int main()
 	ImPlot::CreateContext();
 	ImPlot::GetStyle().AntiAliasedLines = false;
 
+	std::shared_ptr<SetupData> setupdata = std::make_shared<SetupData>();
+	setupdata->seed = 123;
+	setupdata->octaves = 1;
+	setupdata->persistence = 1;
+	setupdata->frequency = 10;
+	setupdata->interpolationMethod = Cosine;
+	//setupdata->colors = ImGui::COLORMAP_DEFAULT;
+
 	PerlinNoise1DVisualizer PerlinNoise1DVisualizer(500);
-	PerlinNoise2DVisualizer PerlinNoise2DVisualizer(300, 50);
+	Texture texture(300, 50, setupdata);
+	Terrain terrain(50, 50, setupdata);
+	terrain.loadShader("res/shaders/vertex.vert", "res/shaders/fragment.frag");
 
 	int display_w = 0, display_h = 0;
 	while (!glfwWindowShouldClose(window))
@@ -151,7 +171,17 @@ int main()
 		ImGui::SetNextWindowPos(ImVec2(0, 25));
 		ImGui::SetNextWindowSize(ImVec2(display_w * .35f, display_h -25));
 		ImGui::Begin("Setup");
-		PerlinNoise2DVisualizer.ShowSetup();
+		ShowSetupWindow(*setupdata);
+		if (texture_window)
+		{
+			if (ImGui::CollapsingHeader("Texture"))
+				texture.ShowSetup();
+		}
+		if (terrain_window)
+		{
+			if (ImGui::CollapsingHeader("Terrain"))
+				terrain.ShowSetup();
+		}
 		ImGui::End(); 
 
 		//Scene Window : texture, terrain etc...
@@ -165,7 +195,7 @@ int main()
 		if (terrain_window)
 		{
 			ImGui::Begin("Terrain", &terrain_window);
-			ImGui::Text("Terrain *WIP*");
+			terrain.ShowTerrain();
 			ImGui::End();
 		}
 
@@ -185,8 +215,8 @@ int main()
 				}
 				ImGui::EndMenuBar();
 			}
-			PerlinNoise2DVisualizer.ResponsiveImg(ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
-			PerlinNoise2DVisualizer.ShowTexture();
+			texture.ResponsiveImg(ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
+			texture.ShowTexture();
 			ImGui::End();
 		}
 
@@ -194,18 +224,20 @@ int main()
 		{
 			ImGui::Begin("Export", &export_window);
 			ImGui::InputText("name", filename, IM_ARRAYSIZE(filename));
-			if (ImGui::Button("Export")) save_image(filename, PerlinNoise2DVisualizer.GetPixels(), PerlinNoise2DVisualizer.GetPixelCount(), PerlinNoise2DVisualizer.GetPixelCount());
+			if (ImGui::Button("Export")) save_image(filename, texture.GetPixels(), texture.GetPixelCount(), texture.GetPixelCount());
 			ImGui::End();
 		}
-
 
 		// Rendering
 		ImGui::Render();
 		glfwGetFramebufferSize(window, &display_w, &display_h);
 		glViewport(0, 0, display_w, display_h);
 		glClearColor(1, 1, 1, 1);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+		//======== Draw opengl stuff here ===============
+		terrain.RenderTerrain();
 
 		// Update and Render additional Platform Windows
 		// (Platform functions may change the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
@@ -218,6 +250,10 @@ int main()
 		}
 
 		glfwSwapBuffers(window);
+
+
+		// !!! Don't forget to reset updated boolean to avoid infinite calculation !!!
+		setupdata->updated = false;
 	}
 
 	// Cleanup
