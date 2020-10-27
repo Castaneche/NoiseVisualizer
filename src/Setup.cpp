@@ -43,6 +43,6 @@ void ShowSetupWindow(SetupData& setupdata)
 	}*/
 
 
-	if (ImGui::ColorMapSelector("Hello", setupdata.colors))
+	if (ImGui::ColorMapSelector("", setupdata.colors))
 		setupdata.updated = true;
 }

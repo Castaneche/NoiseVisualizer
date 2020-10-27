@@ -35,6 +35,10 @@ Texture::~Texture()
 }
 void Texture::ShowTexture()
 {
+	//Setupdata is reset to false at the end of the frame in order to keep track of user inputs every frames
+	// So we store state of setupdata->updated in order to update the texture with modified values
+	if (setupdata->updated) update = true;
+
 	if (update == true || setupdata->updated == true)
 	{
 		std::lock_guard<std::mutex> guard(mutex);
@@ -66,22 +70,22 @@ void Texture::ShowSetup()
 {
 	/* Resolution of the image/texture */
 	ImGui::Text("Resolution : ");
-	if (ImGui::Button("Very Low\n(50x50)"))
+	if (ImGui::Button("Very Low\n(50x50)##Texture"))
 	{
 		resizeImg(50);
 		if (!isCalculating) update = true; //Resizing image while processing noise texture is not allowed
 	} ImGui::SameLine();
-	if (ImGui::Button("Low\n(100x100)"))
+	if (ImGui::Button("Low\n(100x100)##Texture"))
 	{
 		resizeImg(100);
 		if (!isCalculating) update = true;
 	}ImGui::SameLine();
-	if (ImGui::Button("Medium\n(150x150)"))
+	if (ImGui::Button("Medium\n(150x150)##Texture"))
 	{
 		resizeImg(150);
 		if (!isCalculating) update = true;
 	} ImGui::SameLine();
-	if (ImGui::Button("High\n(250x250)"))
+	if (ImGui::Button("High\n(250x250)##Texture"))
 	{
 		resizeImg(250);
 		if (!isCalculating) update = true;

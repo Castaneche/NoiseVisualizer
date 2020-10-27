@@ -57,7 +57,7 @@ int main()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	//glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-	GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(800, 600, "NoiseVisualize", NULL, NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -171,19 +171,21 @@ int main()
 		//Setup Window
 		ImGui::SetNextWindowPos(ImVec2(0, 25));
 		ImGui::SetNextWindowSize(ImVec2(display_w * .35f, display_h -25));
-		ImGui::Begin("Setup");
-		ShowSetupWindow(*setupdata);
-		if (texture_window)
+		if (ImGui::Begin("Setup"))
 		{
-			if (ImGui::CollapsingHeader("Texture"))
-				texture.ShowSetup();
+			ShowSetupWindow(*setupdata);
+			if (texture_window)
+			{
+				if (ImGui::CollapsingHeader("Texture Setup", ImGuiTreeNodeFlags_DefaultOpen))
+					texture.ShowSetup();
+			}
+			if (terrain_window)
+			{
+				if (ImGui::CollapsingHeader("Terrain Setup", ImGuiTreeNodeFlags_DefaultOpen))
+					terrain.ShowSetup();
+			}
+			ImGui::End();
 		}
-		if (terrain_window)
-		{
-			if (ImGui::CollapsingHeader("Terrain"))
-				terrain.ShowSetup();
-		}
-		ImGui::End(); 
 
 		//Scene Window : texture, terrain etc...
 		if (graph_window)

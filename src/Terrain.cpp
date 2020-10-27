@@ -6,6 +6,8 @@
 
 #include "GLFW/glfw3.h"
 
+#include "ColorMapSelector.h"
+
 Terrain::Terrain(int w, int h, std::shared_ptr<SetupData> setupdata)
 {
 	this->setupdata = setupdata;
@@ -70,7 +72,11 @@ void Terrain::loadShader(std::string vertexFile, std::string fragmentFile)
 
 void Terrain::ShowTerrain()
 {
-	if (update == true || setupdata->updated == true)
+	//Setupdata is reset to false at the end of the frame in order to keep track of user inputs every frames
+	// So we store state of setupdata->updated in order to update the terrain with modified values
+	if (setupdata->updated) update = true; 
+
+	if (update == true)
 	{
 		std::lock_guard<std::mutex> guard(mutex);
 		//Retreive isCalculating boolean
@@ -96,15 +102,34 @@ void Terrain::ShowTerrain()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
 
 	// note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	glBindVertexArray(0);
 
+
 	ImGui::Image((void*)(intptr_t)texColorBuffer, ImVec2(ImGui::GetWindowSize().x, ImGui::GetWindowSize().x *0.75));
+
+	/* Code for Overlay : Need to be outside of the function (outside of any imgui window)
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove;
+	ImGuiViewport* viewport = ImGui::GetWindowViewport();
+	ImVec2 pos = viewport->GetWorkPos();
+	pos.y += (ImGui::GetScrollY() / ImGui::GetScrollMaxY()) * ImGui::GetWindowSize().x *0.75f / 2.0;
+	std::cout << pos.y << std::endl;
+	bool open = true;
+	ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+	ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);
+	if (ImGui::Begin("Overlay", &open, window_flags))
+	{
+		ImGui::Text("%d x %d", width, height);
+		ImGui::End();
+	}*/ 
 }
 
 void Terrain::RenderTerrain()
@@ -121,7 +146,8 @@ void Terrain::RenderTerrain()
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::translate(model, glm::vec3(0, 0, 0));
 	model = glm::rotate(model, glm::radians(60.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	model = glm::rotate(model, (float)glfwGetTime() * glm::radians(5.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	rotation += glm::radians(0.5f) * (rotationSpeed);
+	model = glm::rotate(model, rotation, glm::vec3(0.0f, 0.0f, 1.0f));
 	shader->setMat4("model", model);
 	shader->setFloat("maxH", maxHeight);
 
@@ -143,33 +169,45 @@ void Terrain::ShowSetup()
 {
 	/* Resolution of the image/texture */
 	ImGui::Text("Resolution : ");
-	if (ImGui::Button("Very Low\n(50x50)"))
+	if (ImGui::Button("Very Low\n(50x50)##Terrain"))
 	{
-		width = 50; height = 50;
-		generate = true;
-		if (!isCalculating) update = true; //Resizing image while processing noise texture is not allowed
+		if (!isCalculating)//Resizing terrain while processing noise data is not allowed
+		{
+			width = 50; height = 50;
+			generate = true;
+			update = true;
+		}
 	} ImGui::SameLine();
-	if (ImGui::Button("Low\n(100x100)"))
+	if (ImGui::Button("Low\n(100x100)##Terrain"))
 	{
-		width = 100; height = 100;
-		generate = true;
-		if (!isCalculating) update = true;
+		if (!isCalculating)
+		{
+			width = 100; height = 100;
+			generate = true;
+			update = true;
+		}
 	}ImGui::SameLine();
-	if (ImGui::Button("Medium\n(150x150)"))
+	if (ImGui::Button("Medium\n(150x150)##Terrain"))
 	{
-		width = 150; height = 150;
-		generate = true;
-		if (!isCalculating) update = true;
+		if (!isCalculating)
+		{
+			width = 150; height = 150;
+			generate = true;
+			update = true;
+		}
 	} ImGui::SameLine();
-	if (ImGui::Button("High\n(250x250)"))
+	if (ImGui::Button("High\n(250x250)##Terrain"))
 	{
-		width = 250; height = 250;
-		generate = true;
-		if (!isCalculating) update = true;
+		if (!isCalculating) //Resizing terrain while processing noise data is not allowed
+		{
+			width = 250; height = 250;
+			generate = true;
+			update = true;
+		}
 	}
-	if (ImGui::SliderFloat("Maximum Height", &maxHeight, 0, 200))
+	if (ImGui::SliderFloat("Maximum Height", &maxHeight, 0, 100))
 		update = true;
-	ImGui::SliderFloat("Rotation Speed", &rotationSpeed, 0, 10);
+	ImGui::SliderFloat("Rotation Speed", &rotationSpeed, 0, 1);
 }
 
 void Terrain::Update()
@@ -185,12 +223,20 @@ void Terrain::Update()
 	{
 		for (unsigned int j = 0; j < h + 1; j++)
 		{
+			int index = (i * (h + 1) + j) * 6;
+
 			//Noise calculation
 			double px = i / double(w+1) * setupdata->frequency;
 			double py = j / double(h+1) * setupdata->frequency;
-			float z = setupdata->pn.noise(px + setupdata->seed * 100, py + setupdata->seed * 100, setupdata->octaves, setupdata->persistence, setupdata->interpolationMethod) * maxHeight;
-			int index = (i * (h+1) + j) * 3;
+			float n = setupdata->pn.noise(px + setupdata->seed * 100, py + setupdata->seed * 100, setupdata->octaves, setupdata->persistence, setupdata->interpolationMethod);
+
+			float z = n * maxHeight;
 			vertices[index + 2] = z;
+
+			auto c = ImGui::ColorValue(setupdata->colors, n);
+			vertices[index + 3] = c.x;
+			vertices[index + 4] = c.y;
+			vertices[index + 5] = c.z;
 		}
 	}
 
@@ -211,7 +257,7 @@ void Terrain::Generate()
 
 	vertices.clear();
 	indices.clear();
-	vertices.resize((w + 1) * (h + 1) * 3, 0);
+	vertices.resize((w + 1) * (h + 1) * 6, 0);
 	indices.resize(w * h * 6, 0);
 
 
@@ -221,16 +267,24 @@ void Terrain::Generate()
 		float x = i - (w / 2.);
 		for (unsigned int j = 0; j < h + 1; j++)
 		{
-			int index = (i * (h + 1) + j) * 3;
+			int index = (i * (h + 1) + j) * 6;
 
 			float y = j - (h / 2.);
 			vertices[index] = x;
 			vertices[index + 1] = y;
+
 			//Noise calculation
 			double px = i / double(w+1) * setupdata->frequency;
 			double py = j / double(h+1) * setupdata->frequency;
-			float z = setupdata->pn.noise(px + setupdata->seed * 100, py + setupdata->seed * 100, setupdata->octaves, setupdata->persistence, setupdata->interpolationMethod) * maxHeight;
+			float n = setupdata->pn.noise(px + setupdata->seed * 100, py + setupdata->seed * 100, setupdata->octaves, setupdata->persistence, setupdata->interpolationMethod);
+
+			float z = n * maxHeight;
 			vertices[index + 2] = z;
+
+			auto c = ImGui::ColorValue(setupdata->colors, n);
+			vertices[index + 3] = c.x;
+			vertices[index + 4] = c.y;
+			vertices[index + 5] = c.z;
 
 			//std::cout << x << " " << y << " " << z << std::endl;
 		}

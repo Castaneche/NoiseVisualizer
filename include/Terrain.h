@@ -35,11 +35,12 @@ private:
 	std::vector<unsigned int> indices;
 	unsigned int VBO, VAO, EBO; //Terrain
 	unsigned int framebuffer, texColorBuffer, rbo; //Terrain is rendered in a texture in order to be displayed by imgui
+	float rotation = 0;
 
 	//params
 	int width, height;
 	float maxHeight = 10;
-	float rotationSpeed = 5;
+	float rotationSpeed = 0.2f;
 	std::shared_ptr<SetupData> setupdata; //pointer to the global setup data
 };
 
