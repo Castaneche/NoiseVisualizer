@@ -178,16 +178,7 @@ void Terrain::ShowSetup()
 			update = true;
 		}
 	} ImGui::SameLine();
-	if (ImGui::Button("Low\n(100x100)##Terrain"))
-	{
-		if (!isCalculating)
-		{
-			width = 100; height = 100;
-			generate = true;
-			update = true;
-		}
-	}ImGui::SameLine();
-	if (ImGui::Button("Medium\n(150x150)##Terrain"))
+	if (ImGui::Button("Low\n(150x150)##Terrain"))
 	{
 		if (!isCalculating)
 		{
@@ -195,17 +186,26 @@ void Terrain::ShowSetup()
 			generate = true;
 			update = true;
 		}
-	} ImGui::SameLine();
-	if (ImGui::Button("High\n(250x250)##Terrain"))
+	}ImGui::SameLine();
+	if (ImGui::Button("Medium\n(250x250)##Terrain"))
 	{
-		if (!isCalculating) //Resizing terrain while processing noise data is not allowed
+		if (!isCalculating)
 		{
 			width = 250; height = 250;
 			generate = true;
 			update = true;
 		}
+	} ImGui::SameLine();
+	if (ImGui::Button("High\n(500x500)##Terrain"))
+	{
+		if (!isCalculating) //Resizing terrain while processing noise data is not allowed
+		{
+			width = 500; height = 500;
+			generate = true;
+			update = true;
+		}
 	}
-	if (ImGui::SliderFloat("Maximum Height", &maxHeight, 0, 100))
+	if (ImGui::SliderFloat("Maximum Height", &maxHeight, 0, 200))
 		update = true;
 	ImGui::SliderFloat("Rotation Speed", &rotationSpeed, 0, 1);
 }

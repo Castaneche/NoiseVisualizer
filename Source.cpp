@@ -45,7 +45,7 @@ int main()
 {
 
 #ifdef _WIN32
-	FreeConsole(); //Hide console on Windows 
+	//FreeConsole(); //Hide console on Windows 
 #endif
 
 	// Setup window
@@ -57,7 +57,7 @@ int main()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	//glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-	GLFWwindow* window = glfwCreateWindow(800, 600, "NoiseVisualize", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(800, 600, "NoiseVisualizer", NULL, NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -190,45 +190,53 @@ int main()
 		//Scene Window : texture, terrain etc...
 		if (graph_window)
 		{
-			ImGui::Begin("Graph", &graph_window);
-			PerlinNoise1DVisualizer.Show();
-			ImGui::End();
+			if (ImGui::Begin("Graph", &graph_window))
+			{
+				PerlinNoise1DVisualizer.Show();
+				ImGui::End();
+			}
 		}
 
 		if (terrain_window)
 		{
-			ImGui::Begin("Terrain", &terrain_window);
-			terrain.ShowTerrain();
-			ImGui::End();
+			if (ImGui::Begin("Terrain", &terrain_window))
+			{
+				terrain.ShowTerrain();
+				ImGui::End();
+			}
 		}
 
 		if (texture_window)
 		{
-			ImGui::Begin("Texture", &texture_window, ImGuiWindowFlags_MenuBar);
-			if (ImGui::BeginMenuBar())
+			if (ImGui::Begin("Texture", &texture_window, ImGuiWindowFlags_MenuBar))
 			{
-				if (ImGui::BeginMenu("File"))
+				if (ImGui::BeginMenuBar())
 				{
-					if (ImGui::BeginMenu("Save As"))
+					if (ImGui::BeginMenu("File"))
 					{
-						ImGui::MenuItem("pgm", NULL, &export_window);
+						if (ImGui::BeginMenu("Save As"))
+						{
+							ImGui::MenuItem("pgm", NULL, &export_window);
+							ImGui::EndMenu();
+						}
 						ImGui::EndMenu();
 					}
-					ImGui::EndMenu();
+					ImGui::EndMenuBar();
 				}
-				ImGui::EndMenuBar();
+				texture.ResponsiveImg(ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
+				texture.ShowTexture();
+				ImGui::End();
 			}
-			texture.ResponsiveImg(ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
-			texture.ShowTexture();
-			ImGui::End();
 		}
 
 		if (export_window)
 		{
-			ImGui::Begin("Export", &export_window);
-			ImGui::InputText("name", filename, IM_ARRAYSIZE(filename));
-			if (ImGui::Button("Export")) save_image(filename, texture.GetPixels(), texture.GetPixelCount(), texture.GetPixelCount());
-			ImGui::End();
+			if (ImGui::Begin("Export", &export_window))
+			{
+				ImGui::InputText("name", filename, IM_ARRAYSIZE(filename));
+				if (ImGui::Button("Export")) save_image(filename, texture.GetPixels(), texture.GetPixelCount(), texture.GetPixelCount());
+				ImGui::End();
+			}
 		}
 
 		// Rendering
