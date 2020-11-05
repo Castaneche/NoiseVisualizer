@@ -145,7 +145,7 @@ void Terrain::RenderTerrain()
 	// calculate the model matrix for each object and pass it to shader before drawing
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::translate(model, glm::vec3(0, 0, 0));
-	model = glm::rotate(model, glm::radians(60.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	model = glm::rotate(model, glm::radians(viewAngle), glm::vec3(1.0f, 0.0f, 0.0f));
 	rotation += glm::radians(0.5f) * (rotationSpeed);
 	model = glm::rotate(model, rotation, glm::vec3(0.0f, 0.0f, 1.0f));
 	shader->setMat4("model", model);
@@ -208,6 +208,7 @@ void Terrain::ShowSetup()
 	if (ImGui::SliderFloat("Maximum Height", &maxHeight, 0, 200))
 		update = true;
 	ImGui::SliderFloat("Rotation Speed", &rotationSpeed, 0, 1);
+	ImGui::SliderFloat("View Angle", &viewAngle, 0, 90);
 }
 
 void Terrain::Update()

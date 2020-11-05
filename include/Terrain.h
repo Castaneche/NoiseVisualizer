@@ -41,6 +41,7 @@ private:
 	int width, height;
 	float maxHeight = 10;
 	float rotationSpeed = 0.2f;
+	float viewAngle = 60.0f;
 	std::shared_ptr<SetupData> setupdata; //pointer to the global setup data
 };
 
