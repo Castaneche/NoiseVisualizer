@@ -1,8 +1,8 @@
 # NoiseVisualizer
-Visualization of the Perlin noise algorithm (1D and 2D)
+Visualization of the Perlin noise algorithm (1D and 2D)  
 
-![](gif/NoiseVisualizer1D.gif)
-![](gif/NoiseVisualizer2D_final.gif)
-![](gif/Terrain3.gif)
+![Graph view of Perlin Noise](gif/NoiseVisualizer1D.gif)
+![Global view of the app (Texture/Terrain visualization)](gif/NoiseVisualizer_final_resized.gif)
+![Global view of the app (Texture/Terrain visualization)](gif/NoiseVisualizer_colors_resized.gif)
 
-made with imgui, implot and SFML
+made with imgui, implot and OpenGL
