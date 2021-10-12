@@ -58,8 +58,7 @@ namespace ImGui {
 
 		ImRect bb(window->DC.CursorPos, window->DC.CursorPos + Canvas);
 		ItemSize(bb, style.FramePadding.y);
-		if (!ItemAdd(bb, id))
-			return false;
+		ItemAdd(bb, id);
 
 		RenderFrame(bb.Min, bb.Max, GetColorU32(ImGuiCol_FrameBg, 1), true, style.FrameRounding);
 

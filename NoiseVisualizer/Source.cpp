@@ -1,9 +1,10 @@
+#define MAHI_GUI_NO_CONSOLE
+
 #include <Mahi/Gui.hpp>
 #include <Mahi/Util.hpp>
 
 using namespace mahi::gui;
 using namespace mahi::util;
-
 
 #include "src/opengl/Shader.h"
 
@@ -70,7 +71,7 @@ public:
 				if (ImGui::MenuItem("Light"))
 					ImGui::StyleColorsLight();
 				if (ImGui::MenuItem("Dark"))
-					ImGui::StyleColorsDark();
+					ImGui::StyleColorsMahiDark3();
 				ImGui::EndMenu();
 			}
 			ImGui::EndMenu();
@@ -157,7 +158,7 @@ public:
 	}
 
 
-	bool graph_window = true, terrain_window = true, texture_window = true;
+	bool graph_window = false, terrain_window = true, texture_window = true;
 
 	bool export_window = false;
 	char filename[128] = "";

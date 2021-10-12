@@ -74,8 +74,8 @@ void Graph::Show()
 			ImPlot::PlotShaded("Final", xvalues, yvalues[yvalues.size() - 1], nbPoints); //Shade
 			ImPlot::EndPlot();
 		}
-		ImGui::EndChild();	
 	}
+	ImGui::EndChild();
 	ImGui::SameLine();
 
 	if (ImGui::BeginChild("Perlin Noise 1D Setup", ImVec2(ImGui::GetWindowWidth() * .45f, 300)))
@@ -116,7 +116,6 @@ void Graph::Show()
 			interpolationMethod = Cubic;
 			update = true;
 		}
-
-		ImGui::EndChild();
 	}
+	ImGui::EndChild();
 }
