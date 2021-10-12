@@ -1,6 +1,7 @@
 #Folders
 out/
 .vs/
+Release/
 
 #Do not ignore makefiles
 !CMakeLists.txt
