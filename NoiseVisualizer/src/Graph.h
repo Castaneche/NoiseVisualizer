@@ -20,7 +20,7 @@ private:
 	float frequency = 10;
 	float offset = 0;
 	int nbPoints = 500;
-	double* xvalues;
+	double* xvalues; 
 	std::vector<double*> yvalues; //Array to store octaves data
 	bool update = true;
 	bool onlyFinal = false; //Show only the final noise in graph

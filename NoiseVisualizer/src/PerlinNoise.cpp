@@ -40,8 +40,9 @@ unsigned int PerlinNoise::getSeed() const
 double PerlinNoise::noise(double x, Interpolation method)
 {
 	int floor = std::floor(x); //get int value
-	float t = x - floor;
+	float t = x - floor; //residue
 
+	//Retreive the corresponding indices for the mask array
 	int xMin = floor % m_mask.size();
 	int xMax = (xMin + 1) % m_mask.size();
 
@@ -87,7 +88,7 @@ double PerlinNoise::noise(double x, int octaves, double persistence, Interpolati
 double PerlinNoise::noise(double x, double y, Interpolation method)
 {
 	//Look in permutation table to grab a number (this number will be converted to a gradient vector later)
-	int X = (int)std::floor(x) & 255; //Map to 255 to over overflow of the permutation array                     
+	int X = (int)std::floor(x) & 255; //Map to 255 to avoid overflow of the permutation array                     
 	int Y = (int)std::floor(y) & 255;                            
 	int aa, ab, ba, bb;
 	aa = p[p[X] + Y];

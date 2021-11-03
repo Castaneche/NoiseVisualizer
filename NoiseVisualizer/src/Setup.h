@@ -15,8 +15,8 @@ struct SetupData
 	float frequency;
 	Interpolation interpolationMethod;
 	PerlinNoise pn;
-	std::vector<ImVec4> colors;
-	bool updated; 
+	std::vector<ImVec4> colors; //colors for texture and terrain 
+	bool updated; //keep track of parameters state
 };
 
 void ShowSetupWindow(SetupData& setupdata);

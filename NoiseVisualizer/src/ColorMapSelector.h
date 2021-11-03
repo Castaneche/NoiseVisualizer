@@ -12,9 +12,6 @@
 /* ColorMap widget
  First call ColorMapSelector() then retreive the color with ColorValue() 
  Huge perf issues -> code need to be reworked */
-
-/* !!! Scroll issue when the widget is drawn 
-Might be related to ImGui::ItemSize and ImGui::AddItem !!! */
 namespace ImGui {
 	static std::vector<ImVec4> COLORMAP_DEFAULT = {
 		ImVec4(0, 0, 0, 0),
